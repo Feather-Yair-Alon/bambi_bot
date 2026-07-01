@@ -199,6 +199,10 @@ class AgentService:
 ניסוח מחירים:
 כאשר אתה מציין מחיר, נסח באופן טבעי: "המחיר המעודכן הוא ...".
 אל תכתוב "שמופיע אצלי", "לפי המידע שיש לי", "במקורות שלי" או ניסוחים דומים שחושפים את מנגנון הידע.
+מחירים עדכניים:
+לעולם אל תציג מחיר מתוך כלי ידע, תיאור קורס, כלי מועדים או product_price של קורס. מחירים אלה עלולים להיות לא מעודכנים.
+כל מחיר שאתה מוסר למשתמש חייב להגיע רק מ-get_course_current_price או מתוך row_price שחזר מ-get_course_payment_links.
+אם אין מחיר מכלי המחיר/התשלום, אמור שאין לך מחיר עדכני מאושר והעבר לנציג לפי הצורך.
 
 היכרות עם המכללה:
 בתשובות כלליות על המכללה ניתן להציג שמכללת במבי נוסדה על ידי גדעון אבירם ומכשירה נהגים, מדריכים וממוני בטיחות מזה שנים רבות.
@@ -252,6 +256,10 @@ class AgentService:
 ניסוח מחירים:
 כאשר אתה מציין מחיר, נסח באופן טבעי: "המחיר המעודכן הוא ...".
 אל תכתוב "שמופיע אצלי", "לפי המידע שיש לי", "במקורות שלי" או ניסוחים דומים שחושפים את מנגנון הידע.
+מחירים עדכניים:
+לעולם אל תציג מחיר מתוך כלי ידע, תיאור קורס, כלי מועדים או product_price של קורס. מחירים אלה עלולים להיות לא מעודכנים.
+כל מחיר שאתה מוסר למשתמש חייב להגיע רק מ-get_course_current_price או מתוך row_price שחזר מ-get_course_payment_links.
+אם אין מחיר מכלי המחיר/התשלום, אמור שאין לך מחיר עדכני מאושר והעבר לנציג לפי הצורך.
 
 היכרות עם המכללה:
 בתשובות כלליות על המכללה ניתן להציג שמכללת במבי נוסדה על ידי גדעון אבירם ומכשירה נהגים, מדריכים וממוני בטיחות מזה שנים רבות.
@@ -291,7 +299,7 @@ class AgentService:
         return """
 
 כלי MyBusiness:
-יש לך גישה לכלי MyBusiness לבדיקת לקוחות קיימים לפי בקשה מפורשת, קטגוריות קורסים, מועדי קורסים פתוחים, לינקי תשלום דינמיים, בדיקת זכאות לרישום פנימי, ורישום לקוח קיים לקורס לאחר תשלום מאומת.
+יש לך גישה לכלי MyBusiness לבדיקת לקוחות קיימים לפי בקשה מפורשת, קטגוריות קורסים, מועדי קורסים פתוחים, מחיר עדכני מתוך מערכת התשלום, לינקי תשלום דינמיים, בדיקת זכאות לרישום פנימי, ורישום לקוח קיים לקורס לאחר תשלום מאומת.
 רוב הכלים הם לקריאה בלבד. הכלי היחיד שמותר לו ליצור רשומה הוא register_customer_to_course, והוא יוצר CourseEnrollment רק אחרי בדיקת זכאות מלאה.
 אל תיצור לקוחות, אל תעדכן לקוחות, אל תעדכן קורסים ואל תשתמש בכלי כללי לשינוי נתונים.
 
@@ -304,6 +312,13 @@ class AgentService:
 6. הצג רק מועדים שהכלי החזיר, כולל מספר מקומות פנויים.
 7. אל תנחש מועדים, מחירים, מיקום או זמינות.
 8. רק אם find_available_course_dates עצמו החזיר שאין מועדים או requires_representative=true, אל תציע חיפוש חלופי ואל תשאל "תרצה שאבדוק לפי...". העבר לנציג לפי get_course_contact_channel עבור שם הקורס.
+
+כאשר משתמש שואל על מחיר, עלות, תשלום, כמה עולה או כאשר אתה עומד לציין מחיר מיוזמתך:
+1. חובה לקרוא ל-get_course_current_price עם category_id, category_code, category_name או product_id הרלוונטיים.
+2. אל תשתמש במחיר שמופיע בכלי ידע, בתיאור קורס, ב-find_available_course_dates או בשדה product_price. אלו אינם מקור סמכות למחיר.
+3. אם get_course_current_price מחזיר מחיר יחיד, השתמש בו ונסח: "המחיר המעודכן הוא ...".
+4. אם get_course_current_price מחזיר כמה אפשרויות מחיר, בדוק את description_for_bot/name/title. אם אין התאמה חד-משמעית, שאל שאלת הבהרה קצרה.
+5. אם לא נמצא מחיר עדכני, אל תנחש ואל תצטט מחיר ישן; העבר לנציג לפי get_course_contact_channel אם מדובר בקורס ספציפי.
 
 כאשר משתמש מבקש לבדוק אם לקוח קיים:
 1. אם חסר טלפון או מספר מזהה, בקש אותו.
@@ -348,6 +363,7 @@ class AgentService:
 לפני שליחת לינק תשלום חובה לבקש מהלקוח את הפרטים הבאים לצורך רישום לאחר התשלום: שם מלא, מספר טלפון, תעודת זהות ומייל.
 אין צורך לבדוק לפני כן אם הלקוח כבר קיים במערכת. לקוח חדש יכול להמשיך לתשלום והרשמה ראשונית דרך לינק התשלום.
 אם הכלי מחזיר payment_links אחד בלבד, מותר לשלוח אותו ללקוח ולהסביר שהלינק הוא דף תשלום כללי ואינו שומר מקום עד אימות תשלום והרשמה במערכת.
+אם אתה מציין מחיר יחד עם לינק התשלום, השתמש רק ב-row_price של אותו payment_link. אם מחיר קודם בשיחה שונה מה-row_price, תקן את עצמך בקצרה והבהר שהמחיר העדכני לתשלום הוא row_price.
 אם הכלי מחזיר כמה payment_links, בדוק את description_for_bot, name, title ו-row_price. אם אין התאמה חד-משמעית לבקשת הלקוח, שאל את הלקוח איזו אפשרות תשלום מתאימה לו. אל תבחר לבד.
 אם הכלי מחזיר requires_representative=true או restricted_links_summary בלבד, אל תציג שום לינק תשלום והעבר לנציג.
 לעולם אל תציג או תציע לינקים של הנחה. אם לקוח מבקש הנחה, הסבר שהנחות דורשות טיפול נציג.
@@ -690,6 +706,45 @@ class AgentService:
             )
             return payload
 
+        async def get_course_current_price(
+            category_id: str | None = None,
+            category_code: str | None = None,
+            category_name: str | None = None,
+            product_id: str | None = None,
+        ) -> dict[str, Any]:
+            """Return current approved course prices from MyBusiness payment rows. Use this before quoting any price."""
+            try:
+                payload = await service.payment_links.get_course_current_price(
+                    category_id=category_id,
+                    category_code=category_code,
+                    category_name=category_name,
+                    product_id=product_id,
+                )
+            except Exception as exc:  # noqa: BLE001 - tool should return structured failure to the agent.
+                payload = {"found": False, "prices": [], "error": type(exc).__name__}
+            service.db.log_tool_call(
+                None,
+                "get_course_current_price",
+                {
+                    "category_id": category_id,
+                    "category_code": category_code,
+                    "category_name": category_name,
+                    "product_id": product_id,
+                },
+                {
+                    "found": payload.get("found"),
+                    "requires_user_choice": payload.get("requires_user_choice"),
+                    "requires_representative": payload.get("requires_representative"),
+                    "matched_by": payload.get("matched_by"),
+                    "prices_count": len(payload.get("prices") or []),
+                    "error": payload.get("error"),
+                    "reason": payload.get("reason"),
+                    "price_source": payload.get("price_source"),
+                },
+                bool(payload.get("found")),
+            )
+            return payload
+
         async def get_course_contact_channel(course_name: str) -> dict[str, Any]:
             """Return the course-family-specific Bambi WhatsApp contact for human handoff."""
             try:
@@ -727,6 +782,7 @@ class AgentService:
                 function_tool(find_available_course_dates),
                 function_tool(check_customer_registration_eligibility),
                 function_tool(register_customer_to_course),
+                function_tool(get_course_current_price),
                 function_tool(get_course_payment_links),
                 function_tool(get_course_contact_channel),
             ]

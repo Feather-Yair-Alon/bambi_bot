@@ -230,6 +230,34 @@ def test_get_course_payment_links_falls_back_to_inactive_category_products_after
     assert result["payment_links"][0]["payment_btn_id"] == "btn_tachograph"
 
 
+def test_get_course_current_price_uses_payment_row_price() -> None:
+    service = PaymentLinkService(FakeMyBusiness())
+    service.mybusiness.products.append(
+        {
+            "objectId": "prod_tachograph_general",
+            "Name": "יום עיון לקציני בטיחות",
+            "CatalogNumber": "80049",
+            "Price": 400,
+            "IsActive": True,
+            "Category": pointer("ProductCategories", "cat_safety_officers_day"),
+        }
+    )
+
+    result = run(
+        service.get_course_current_price(
+            category_id="cat_safety_officers_day",
+            category_code="80049",
+            category_name="יום עיון לקציני בטיחות",
+            product_id="prod_tachograph_general",
+        )
+    )
+
+    assert result["found"] is True
+    assert result["price_source"] == "PaymentBtnsRows.Price"
+    assert result["prices"][0]["price"] == 1000
+    assert "payment_url" not in result["prices"][0]
+
+
 def test_payment_intent_ranks_deposit_first_without_filtering() -> None:
     service = PaymentLinkService(FakeMyBusiness())
 

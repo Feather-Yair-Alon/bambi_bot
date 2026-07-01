@@ -94,6 +94,7 @@ def test_map_available_course_returns_positive_capacity() -> None:
         "MaxCapacity": 10,
         "RegisteredStudents": 7,
         "StatusId": {"objectId": "status1", "Name": "פתוח לרישום"},
+        "ProductId": {"objectId": "product1", "Name": "קורס מלגזה", "Price": 400},
     }
 
     course = map_available_course(row, category)
@@ -102,3 +103,5 @@ def test_map_available_course_returns_positive_capacity() -> None:
     assert course["available_seats"] == 3
     assert course["category_id"] == "cat1"
     assert course["status"] == "פתוח לרישום"
+    assert course["product_price"] is None
+    assert "get_course_current_price" in course["price_note"]

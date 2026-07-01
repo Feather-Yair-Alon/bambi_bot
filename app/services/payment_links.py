@@ -39,6 +39,33 @@ class PaymentLinkService:
     def __init__(self, mybusiness: Any):
         self.mybusiness = mybusiness
 
+    async def get_course_current_price(
+        self,
+        category_id: str | None = None,
+        category_code: str | None = None,
+        category_name: str | None = None,
+        product_id: str | None = None,
+    ) -> dict[str, Any]:
+        payload = await self.get_course_payment_links(
+            category_id=category_id,
+            category_code=category_code,
+            category_name=category_name,
+            product_id=product_id,
+        )
+        links = payload.get("payment_links") or []
+        prices = current_price_options_from_links(links)
+        return {
+            "found": bool(prices),
+            "requires_user_choice": len(prices) > 1,
+            "requires_representative": payload.get("requires_representative", False),
+            "category": payload.get("category"),
+            "matched_by": payload.get("matched_by"),
+            "prices": prices,
+            "restricted_links_summary": payload.get("restricted_links_summary") or [],
+            "reason": None if prices else payload.get("reason") or "No current payment price was found.",
+            "price_source": "PaymentBtnsRows.Price",
+        }
+
     async def get_course_payment_links(
         self,
         category_id: str | None = None,
@@ -420,6 +447,30 @@ def format_payment_link(payment_btn: dict[str, Any], row: dict[str, Any], produc
         "payment_url": build_payment_url(payment_btn_id, payment_btn.get("Link")),
         "description_for_bot": build_description(name, title, row.get("ProductDescription"), product_name, row_price),
     }
+
+
+def current_price_options_from_links(links: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    seen: set[tuple[Any, str | None]] = set()
+    prices: list[dict[str, Any]] = []
+    for link in links:
+        row_price = link.get("row_price")
+        product = link.get("product") or {}
+        key = (row_price, link.get("payment_btn_id"))
+        if key in seen:
+            continue
+        seen.add(key)
+        prices.append(
+            {
+                "price": row_price,
+                "payment_btn_id": link.get("payment_btn_id"),
+                "name": link.get("name"),
+                "title": link.get("title"),
+                "product_name": product.get("product_name"),
+                "catalog_number": product.get("catalog_number"),
+                "description_for_bot": link.get("description_for_bot"),
+            }
+        )
+    return prices
 
 
 def build_payment_url(payment_btn_id: str | None, link_field: Any) -> str | None:
