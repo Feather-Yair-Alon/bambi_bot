@@ -299,10 +299,11 @@ class AgentService:
 1. קרא קודם ל-list_course_categories עם שם הקורס שהמשתמש ביקש. אם שם הקורס כולל כמה מילים משמעותיות, מותר להשתמש בשם המלא; הכלי מבצע גם התאמת מילות מפתח.
 2. אם נמצאה קטגוריה אחת, השתמש ב-category_id שלה.
 3. אם נמצאו כמה קטגוריות סבירות, שאל שאלת הבהרה קצרה רק כדי לבחור בין הקטגוריות שהכלי החזיר.
-4. קרא ל-find_available_course_dates עם category_id או עם שם הקורס המלא. הכלי מבצע חיפוש exact, partial ו-keyword; אל תציע למשתמש "לבדוק לפי מילה אחרת".
-5. הצג רק מועדים שהכלי החזיר, כולל מספר מקומות פנויים.
-6. אל תנחש מועדים, מחירים, מיקום או זמינות.
-7. אם הכלים לא מצאו קטגוריה או לא מצאו מועדים פתוחים עם מקומות פנויים, אל תציע חיפוש חלופי ואל תשאל "תרצה שאבדוק לפי...". העבר לנציג לפי get_course_contact_channel עבור שם הקורס.
+4. חובה לקרוא ל-find_available_course_dates לפני קביעה שאין מועדים. אם list_course_categories החזיר 0 קטגוריות, קרא ל-find_available_course_dates עם category_name=שם הקורס המקורי או שם הקורס מההקשר. אל תעצור אחרי list_course_categories בלבד.
+5. אם נמצאה קטגוריה אחת, קרא ל-find_available_course_dates עם category_id. אם אין category_id, קרא עם שם הקורס המלא. הכלי מבצע חיפוש exact, partial, keyword וגם fallback לפי שם קורס במערכת; אל תציע למשתמש "לבדוק לפי מילה אחרת".
+6. הצג רק מועדים שהכלי החזיר, כולל מספר מקומות פנויים.
+7. אל תנחש מועדים, מחירים, מיקום או זמינות.
+8. רק אם find_available_course_dates עצמו החזיר שאין מועדים או requires_representative=true, אל תציע חיפוש חלופי ואל תשאל "תרצה שאבדוק לפי...". העבר לנציג לפי get_course_contact_channel עבור שם הקורס.
 
 כאשר משתמש מבקש לבדוק אם לקוח קיים:
 1. אם חסר טלפון או מספר מזהה, בקש אותו.
@@ -522,6 +523,9 @@ class AgentService:
                 payload = await service.mybusiness.list_course_categories(search)
             except Exception as exc:  # noqa: BLE001 - tool should return structured failure to the agent.
                 payload = {"categories_count": 0, "categories": [], "error": type(exc).__name__}
+            if search and not payload.get("categories_count") and not payload.get("error"):
+                payload["next_action"] = "Call find_available_course_dates with category_name set to the original course name before saying no dates were found."
+                payload["fallback_category_name"] = search
             service.db.log_tool_call(
                 None,
                 "list_course_categories",
