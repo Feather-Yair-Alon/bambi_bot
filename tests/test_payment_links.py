@@ -1,5 +1,6 @@
 import asyncio
 import json
+import re
 from typing import Any
 
 from app.services.mybusiness import pointer
@@ -14,6 +15,7 @@ class FakeMyBusiness:
             {"objectId": "cat_forklift", "Name": "מלגזה", "Code": "80001"},
             {"objectId": "cat_forklift_refresh", "Name": "רענון מלגזה", "Code": "80003"},
             {"objectId": "cat_tractor", "Name": "טרקטור", "Code": "80007"},
+            {"objectId": "cat_safety_officers_day", "Name": "יום עיון לקציני בטיחות", "Code": "80049"},
             {"objectId": "cat_discount_only", "Name": "קורס הנחות", "Code": "99999"},
         ]
         self.products = [
@@ -50,6 +52,14 @@ class FakeMyBusiness:
                 "Category": pointer("ProductCategories", "cat_tractor"),
             },
             {
+                "objectId": "prod_tachograph",
+                "Name": "השתלמות טכוגרף דיגיטלי לקציני בטיחות",
+                "CatalogNumber": "80049",
+                "Price": 1000,
+                "IsActive": False,
+                "Category": pointer("ProductCategories", "cat_safety_officers_day"),
+            },
+            {
                 "objectId": "prod_discount_only",
                 "Name": "קורס הנחות",
                 "CatalogNumber": "99999",
@@ -65,6 +75,12 @@ class FakeMyBusiness:
             "btn_refresh": {"objectId": "btn_refresh", "Name": "ריענון מלגזה בודדים", "Title": "ריענון מלגזה", "Active": True},
             "btn_tractor": {"objectId": "btn_tractor", "Name": "קורס טרקטור ישראלים", "Title": "קורס טרקטור", "Active": True},
             "btn_tractor_discount": {"objectId": "btn_tractor_discount", "Name": "10 אחוז הנחה לקורס טרקטור", "Active": True},
+            "btn_tachograph": {
+                "objectId": "btn_tachograph",
+                "Name": "השתלמות טכוגרף דיגיטלי לקציני בטיחות",
+                "Title": "",
+                "Active": True,
+            },
             "btn_discount_only": {"objectId": "btn_discount_only", "Name": "15 אחוז הנחה", "Active": True},
         }
         self.rows = [
@@ -74,6 +90,7 @@ class FakeMyBusiness:
             row("row_r1", "btn_refresh", "prod_forklift_refresh", "ריענון מלגזה", 339),
             row("row_t1", "btn_tractor", "prod_tractor", "קורס טרקטור", 2712),
             row("row_t2", "btn_tractor_discount", "prod_tractor", "10 אחוז הנחה", 2000),
+            row("row_tachograph", "btn_tachograph", "prod_tachograph", "השתלמות טכוגרף דיגיטלי לקציני בטיחות", 1000),
             row("row_d1", "btn_discount_only", "prod_discount_only", "הנחה", 100),
         ]
 
@@ -98,6 +115,8 @@ class FakeMyBusiness:
             category_id = where.get("Category", {}).get("objectId")
             return [self._include_category(item) for item in self.products if item.get("Category", {}).get("objectId") == category_id]
         if table_name == "PaymentBtnsRows":
+            if "$or" in where:
+                return [self._include_row(row_data) for row_data in self.rows if row_matches_search(self._include_row(row_data), where["$or"])]
             product_ids = {item["objectId"] for item in where.get("ProductId", {}).get("$in", [])}
             return [self._include_row(row_data) for row_data in self.rows if row_data["ProductId"]["objectId"] in product_ids]
         return []
@@ -121,6 +140,25 @@ def row(row_id: str, button_id: str, product_id: str, description: str, price: i
         "ProductDescription": description,
         "Price": price,
     }
+
+
+def row_matches_search(row_data: dict[str, Any], clauses: list[dict[str, Any]]) -> bool:
+    for clause in clauses:
+        for path, condition in clause.items():
+            value = dotted_get(row_data, path)
+            pattern = condition.get("$regex") if isinstance(condition, dict) else None
+            if pattern and re.search(pattern, str(value or ""), re.IGNORECASE):
+                return True
+    return False
+
+
+def dotted_get(data: dict[str, Any], path: str) -> Any:
+    value: Any = data
+    for part in path.split("."):
+        if not isinstance(value, dict):
+            return None
+        value = value.get(part)
+    return value
 
 
 def run(coro):
@@ -151,6 +189,18 @@ def test_get_course_payment_links_can_resolve_by_product_id() -> None:
     assert result["requires_user_choice"] is False
     assert result["payment_links"][0]["payment_btn_id"] == "btn_refresh"
     assert result["payment_links"][0]["payment_url"].endswith("oid=btn_refresh")
+
+
+def test_get_course_payment_links_searches_payment_api_columns() -> None:
+    service = PaymentLinkService(FakeMyBusiness())
+
+    result = run(service.get_course_payment_links(category_name="טכוגרף"))
+
+    assert result["found"] is True
+    assert result["matched_by"] == "payment_rows_api_search"
+    assert result["requires_user_choice"] is False
+    assert result["payment_links"][0]["payment_btn_id"] == "btn_tachograph"
+    assert result["payment_links"][0]["product"]["catalog_number"] == "80049"
 
 
 def test_payment_intent_ranks_deposit_first_without_filtering() -> None:

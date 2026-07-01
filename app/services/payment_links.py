@@ -11,6 +11,28 @@ PAYMENT_URL_BASE = f"https://{TENANT_DOMAIN}/apps/mybooks/payment-btn-page?cls=P
 REQUIRED_CUSTOMER_DETAILS = ["שם מלא", "מספר טלפון", "תעודת זהות", "מייל"]
 PAYMENT_INTENTS = {"FULL", "DEPOSIT", "REFRESHER", "FRIDAY", "THEORY", "PRACTICAL", "EXAM", "GENERAL"}
 DISCOUNT_KEYWORDS = ("הנחה", "אחוז הנחה", "10 אחוז", "15 אחוז", "discount")
+PAYMENT_SEARCH_STOPWORDS = {
+    "course",
+    "payment",
+    "link",
+    "קורס",
+    "קורסי",
+    "קורסים",
+    "לקורס",
+    "בקורס",
+    "השתלמות",
+    "הכשרה",
+    "תשלום",
+    "לתשלום",
+    "הרשמה",
+    "להרשמה",
+    "של",
+    "על",
+    "עם",
+    "את",
+    "אל",
+    "לקציני",
+}
 
 
 class PaymentLinkService:
@@ -63,7 +85,9 @@ class PaymentLinkService:
                 "reason": "No products were found for the requested course category.",
             }
 
-        rows = await self._get_payment_rows_for_products([product["objectId"] for product in products if product.get("objectId")])
+        rows = product_result.get("payment_rows") or await self._get_payment_rows_for_products(
+            [product["objectId"] for product in products if product.get("objectId")]
+        )
         product_by_id = {product["objectId"]: product for product in products if product.get("objectId")}
         payment_links: list[dict[str, Any]] = []
         restricted_links: list[dict[str, Any]] = []
@@ -110,6 +134,8 @@ class PaymentLinkService:
             "requires_user_choice": len(payment_links) > 1,
             "requires_representative": False,
             "category": category,
+            "matched_by": product_result.get("matched_by"),
+            "matched_categories": product_result.get("matched_categories"),
             "products_count": len(products),
             "payment_links": payment_links,
             "restricted_links_summary": restricted_links,
@@ -138,6 +164,20 @@ class PaymentLinkService:
 
         category_result = await self._resolve_category(category_id, category_code, category_name)
         if not category_result.get("found"):
+            if category_name and not category_id and not category_code and not category_result.get("ambiguous_category"):
+                payment_rows = await self._search_payment_rows_once(category_name)
+                if payment_rows:
+                    products = products_from_payment_rows(payment_rows)
+                    categories = categories_from_products(products)
+                    return {
+                        "found": True,
+                        "matched_by": "payment_rows_api_search",
+                        "search": category_name,
+                        "category": categories[0] if len(categories) == 1 else None,
+                        "matched_categories": categories,
+                        "products": products,
+                        "payment_rows": payment_rows,
+                    }
             return category_result
 
         category = category_result["category"]
@@ -183,6 +223,20 @@ class PaymentLinkService:
 
         partial = [row for row in rows if query and query in normalize_payment_text(row.get("Name"))]
         return resolve_category_matches(partial)
+
+    async def _search_payment_rows_once(self, search: str) -> list[dict[str, Any]]:
+        terms = payment_search_terms(search)
+        if not terms:
+            return []
+        return await self.mybusiness._get_class(
+            "PaymentBtnsRows",
+            {
+                "where": json_dumps(payment_rows_search_where(terms)),
+                "limit": 1000,
+                "include": "PaymentBtnId,ProductId,ProductId.Category",
+                "keys": "objectId,PaymentBtnId,ProductId,ProductDescription,Price,MinQuantity,MaxQuantity,CurrencyRate,createdAt,updatedAt",
+            },
+        )
 
     async def _get_products_for_category(self, category_id: str) -> list[dict[str, Any]]:
         return await self.mybusiness._get_class(
@@ -264,6 +318,56 @@ def map_category_ref(row: Any) -> dict[str, Any] | None:
         "created_at": row.get("createdAt"),
         "updated_at": row.get("updatedAt"),
     }
+
+
+def payment_search_terms(search: Any) -> list[str]:
+    query = normalize_payment_text(search)
+    if not query:
+        return []
+    terms = [query]
+    for token in query.split():
+        if len(token) >= 3 and token not in PAYMENT_SEARCH_STOPWORDS and token not in terms:
+            terms.append(token)
+    return terms
+
+
+def payment_rows_search_where(terms: list[str]) -> dict[str, Any]:
+    fields = [
+        "ProductDescription",
+        "ProductId.Name",
+        "ProductId.CatalogNumber",
+        "ProductId.Category.Name",
+        "ProductId.Category.Code",
+        "PaymentBtnId.Name",
+        "PaymentBtnId.Title",
+        "PaymentBtnId.TopParagraph",
+        "PaymentBtnId.Footer",
+    ]
+    clauses = []
+    for term in terms:
+        regex = {"$regex": re.escape(term), "$options": "i"}
+        clauses.extend({field: regex} for field in fields)
+    return {
+        "$or": clauses
+    }
+
+
+def products_from_payment_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    products: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        product = row.get("ProductId") if isinstance(row.get("ProductId"), dict) else None
+        if product and product.get("objectId"):
+            products[product["objectId"]] = product
+    return list(products.values())
+
+
+def categories_from_products(products: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    categories: dict[str, dict[str, Any]] = {}
+    for product in products:
+        category = map_category_ref(product.get("Category"))
+        if category and category.get("category_id"):
+            categories[category["category_id"]] = category
+    return list(categories.values())
 
 
 def format_payment_link(payment_btn: dict[str, Any], row: dict[str, Any], product: dict[str, Any]) -> dict[str, Any]:
