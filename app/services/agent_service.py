@@ -679,6 +679,7 @@ class AgentService:
                     "found": payload.get("found"),
                     "requires_user_choice": payload.get("requires_user_choice"),
                     "requires_representative": payload.get("requires_representative"),
+                    "matched_by": payload.get("matched_by"),
                     "payment_links_count": len(payload.get("payment_links") or []),
                     "restricted_links_count": len(payload.get("restricted_links_summary") or []),
                     "ambiguous_category": payload.get("ambiguous_category"),

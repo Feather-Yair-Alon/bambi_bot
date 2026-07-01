@@ -203,6 +203,33 @@ def test_get_course_payment_links_searches_payment_api_columns() -> None:
     assert result["payment_links"][0]["product"]["catalog_number"] == "80049"
 
 
+def test_get_course_payment_links_falls_back_to_inactive_category_products_after_product_miss() -> None:
+    service = PaymentLinkService(FakeMyBusiness())
+    service.mybusiness.products.append(
+        {
+            "objectId": "prod_tachograph_general",
+            "Name": "יום עיון לקציני בטיחות",
+            "CatalogNumber": "80049",
+            "Price": 400,
+            "IsActive": True,
+            "Category": pointer("ProductCategories", "cat_safety_officers_day"),
+        }
+    )
+
+    result = run(
+        service.get_course_payment_links(
+            category_id="cat_safety_officers_day",
+            category_code="80049",
+            category_name="יום עיון לקציני בטיחות",
+            product_id="prod_tachograph_general",
+        )
+    )
+
+    assert result["found"] is True
+    assert result["matched_by"] == "all_category_products_after_payment_miss"
+    assert result["payment_links"][0]["payment_btn_id"] == "btn_tachograph"
+
+
 def test_payment_intent_ranks_deposit_first_without_filtering() -> None:
     service = PaymentLinkService(FakeMyBusiness())
 

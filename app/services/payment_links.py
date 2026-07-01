@@ -88,6 +88,13 @@ class PaymentLinkService:
         rows = product_result.get("payment_rows") or await self._get_payment_rows_for_products(
             [product["objectId"] for product in products if product.get("objectId")]
         )
+        if not rows:
+            fallback = await self._resolve_category_products_after_payment_miss(product_result)
+            if fallback.get("found"):
+                product_result = fallback
+                category = product_result.get("category")
+                products = product_result.get("products") or []
+                rows = product_result.get("payment_rows") or []
         product_by_id = {product["objectId"]: product for product in products if product.get("objectId")}
         payment_links: list[dict[str, Any]] = []
         restricted_links: list[dict[str, Any]] = []
@@ -183,7 +190,25 @@ class PaymentLinkService:
         category = category_result["category"]
         products = await self._get_products_for_category(category["category_id"])
         active_or_unspecified = [product for product in products if product.get("IsActive") is not False]
-        return {"found": True, "category": category, "products": active_or_unspecified or products}
+        return {"found": True, "category": category, "products": active_or_unspecified or products, "all_category_products": products}
+
+    async def _resolve_category_products_after_payment_miss(self, product_result: dict[str, Any]) -> dict[str, Any]:
+        category = product_result.get("category") or {}
+        category_id = category.get("category_id")
+        if not category_id:
+            return {"found": False}
+
+        products = product_result.get("all_category_products") or await self._get_products_for_category(category_id)
+        rows = await self._get_payment_rows_for_products([product["objectId"] for product in products if product.get("objectId")])
+        if not rows:
+            return {"found": False}
+        return {
+            "found": True,
+            "matched_by": "all_category_products_after_payment_miss",
+            "category": category,
+            "products": products,
+            "payment_rows": rows,
+        }
 
     async def _resolve_category(
         self,
