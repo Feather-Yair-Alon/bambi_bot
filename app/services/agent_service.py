@@ -15,6 +15,11 @@ from app.config import Settings
 from app.db import Database
 from app.schemas import AgentAnswer, ChatHistoryItem, ChatSessionDetail
 from app.services.contact_channels import ContactChannelService
+from app.services.knowledge_price_enrichment import (
+    build_price_content_section,
+    is_course_knowledge_tool,
+    safe_current_price_payload,
+)
 from app.services.knowledge_files import KnowledgeFileService
 from app.services.mybusiness import MyBusinessService
 from app.services.payment_links import PaymentLinkService, is_approved_dynamic_payment_url
@@ -201,7 +206,7 @@ class AgentService:
 אל תכתוב "שמופיע אצלי", "לפי המידע שיש לי", "במקורות שלי" או ניסוחים דומים שחושפים את מנגנון הידע.
 מחירים עדכניים:
 לעולם אל תציג מחיר מתוך כלי ידע, תיאור קורס, כלי מועדים או product_price של קורס. מחירים אלה עלולים להיות לא מעודכנים.
-כל מחיר שאתה מוסר למשתמש חייב להגיע רק מ-get_course_current_price או מתוך row_price שחזר מ-get_course_payment_links.
+כל מחיר שאתה מוסר למשתמש חייב להגיע רק מ-current_price שחזר מכלי קורס ספציפי, מ-get_course_current_price או מתוך row_price שחזר מ-get_course_payment_links.
 אם אין מחיר מכלי המחיר/התשלום, אמור שאין לך מחיר עדכני מאושר והעבר לנציג לפי הצורך.
 
 היכרות עם המכללה:
@@ -258,7 +263,7 @@ class AgentService:
 אל תכתוב "שמופיע אצלי", "לפי המידע שיש לי", "במקורות שלי" או ניסוחים דומים שחושפים את מנגנון הידע.
 מחירים עדכניים:
 לעולם אל תציג מחיר מתוך כלי ידע, תיאור קורס, כלי מועדים או product_price של קורס. מחירים אלה עלולים להיות לא מעודכנים.
-כל מחיר שאתה מוסר למשתמש חייב להגיע רק מ-get_course_current_price או מתוך row_price שחזר מ-get_course_payment_links.
+כל מחיר שאתה מוסר למשתמש חייב להגיע רק מ-current_price שחזר מכלי קורס ספציפי, מ-get_course_current_price או מתוך row_price שחזר מ-get_course_payment_links.
 אם אין מחיר מכלי המחיר/התשלום, אמור שאין לך מחיר עדכני מאושר והעבר לנציג לפי הצורך.
 
 היכרות עם המכללה:
@@ -314,11 +319,12 @@ class AgentService:
 8. רק אם find_available_course_dates עצמו החזיר שאין מועדים או requires_representative=true, אל תציע חיפוש חלופי ואל תשאל "תרצה שאבדוק לפי...". העבר לנציג לפי get_course_contact_channel עבור שם הקורס.
 
 כאשר משתמש שואל על מחיר, עלות, תשלום, כמה עולה או כאשר אתה עומד לציין מחיר מיוזמתך:
-1. חובה לקרוא ל-get_course_current_price עם category_id, category_code, category_name או product_id הרלוונטיים.
-2. אל תשתמש במחיר שמופיע בכלי ידע, בתיאור קורס, ב-find_available_course_dates או בשדה product_price. אלו אינם מקור סמכות למחיר.
-3. אם get_course_current_price מחזיר מחיר יחיד, השתמש בו ונסח: "המחיר המעודכן הוא ...".
-4. אם get_course_current_price מחזיר כמה אפשרויות מחיר, בדוק את description_for_bot/name/title. אם אין התאמה חד-משמעית, שאל שאלת הבהרה קצרה.
-5. אם לא נמצא מחיר עדכני, אל תנחש ואל תצטט מחיר ישן; העבר לנציג לפי get_course_contact_channel אם מדובר בקורס ספציפי.
+1. אם כבר קראת לכלי קורס ספציפי והוא החזיר current_price.found=true, השתמש במחיר הזה כמקור מאושר.
+2. אם אין current_price מאושר מהכלי הספציפי, חובה לקרוא ל-get_course_current_price עם category_id, category_code, category_name או product_id הרלוונטיים.
+3. אל תשתמש במחיר שמופיע בגוף כלי ידע, בתיאור קורס, ב-find_available_course_dates או בשדה product_price. אלו אינם מקור סמכות למחיר.
+4. אם מקור המחיר המאושר מחזיר מחיר יחיד, השתמש בו ונסח: "המחיר המעודכן הוא ...".
+5. אם מקור המחיר המאושר מחזיר כמה אפשרויות מחיר, בדוק את description_for_bot/name/title. אם אין התאמה חד-משמעית, שאל שאלת הבהרה קצרה.
+6. אם לא נמצא מחיר עדכני, אל תנחש ואל תצטט מחיר ישן; העבר לנציג לפי get_course_contact_channel אם מדובר בקורס ספציפי.
 
 כאשר משתמש מבקש לבדוק אם לקוח קיים:
 1. אם חסר טלפון או מספר מזהה, בקש אותו.
@@ -503,9 +509,29 @@ class AgentService:
                 return True
         return False
 
-    def _read_knowledge_tool(self, tool_id: str) -> dict[str, Any]:
+    async def _read_knowledge_tool(self, tool_id: str) -> dict[str, Any]:
         payload = self.knowledge_files.read_tool_file(tool_id)
+        if payload.get("found") and is_course_knowledge_tool(tool_id):
+            payload = await self._enrich_knowledge_tool_with_current_price(payload)
         self.db.log_tool_call(None, tool_id, {}, payload, bool(payload["found"]))
+        return payload
+
+    async def _enrich_knowledge_tool_with_current_price(self, payload: dict[str, Any]) -> dict[str, Any]:
+        course_name = str(payload.get("tool_name") or payload.get("description") or payload.get("tool_id") or "")
+        try:
+            raw_price = await self.payment_links.get_course_current_price(category_name=course_name)
+            current_price = safe_current_price_payload(raw_price)
+        except Exception as exc:  # noqa: BLE001 - knowledge tools should still return course content.
+            current_price = safe_current_price_payload(
+                {
+                    "found": False,
+                    "prices": [],
+                    "reason": f"Current price lookup failed: {type(exc).__name__}",
+                }
+            )
+
+        payload["current_price"] = current_price
+        payload["content"] = f"{payload.get('content') or ''}{build_price_content_section(current_price)}"
         return payload
 
     def _build_tools(self) -> list[Any]:
@@ -809,7 +835,7 @@ class AgentService:
 
             def build_reader(tool_id: str):
                 async def read_knowledge_file() -> dict[str, Any]:
-                    return service._read_knowledge_tool(tool_id)
+                    return await service._read_knowledge_tool(tool_id)
 
                 return read_knowledge_file
 
