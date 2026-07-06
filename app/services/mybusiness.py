@@ -16,6 +16,8 @@ REGISTERED_ENROLLMENT_STATUS_ID = "0BbaSYbE8x"
 TENTATIVE_COURSE_STATUS_ID = "bh0iCW38FE"
 OPEN_REGISTRATION_COURSE_STATUS_ID = "U3IMyC5c9H"
 INACTIVE_COURSE_STATUS_IDS = {"FbdRzAz07C", "d4YY2V8STP", "elArHVxiHv"}
+EXTERNAL_COURSE_YES_ID = "mVKQuy9lFi"
+EXTERNAL_COURSE_NO_ID = "ZCtaDoTS3G"
 MIN_COURSE_KEYWORD_LENGTH = 3
 COURSE_SEARCH_STOPWORDS = {
     "course",
@@ -218,16 +220,17 @@ class MyBusinessService:
             "StatusId": {"$in": [pointer("CourseStatuses", status["status_id"]) for status in open_statuses]},
             "ProductCategory": pointer("ProductCategories", category["category_id"]),
         }
+        where = with_internal_courses_only_filter(where)
         rows = await self._get_class(
             "Courses",
             {
                 "where": json_dumps(where),
                 "limit": 1000,
                 "order": "StartDate",
-                "include": "StatusId,ProductCategory,ProductId,FacilityId,MainLecturerId,MainClassId",
+                "include": "StatusId,ProductCategory,ProductId,FacilityId,MainLecturerId,MainClassId,ExternalCourse",
                 "keys": (
                     "objectId,Name,StartDate,EndDate,FirstClass,StatusId,ProductCategory,ProductId,FacilityId,"
-                    "MainLecturerId,MainClassId,MaxCapacity,RegisteredStudents,AllowOverBooking,NumberOfLessons"
+                    "MainLecturerId,MainClassId,ExternalCourse,MaxCapacity,RegisteredStudents,AllowOverBooking,NumberOfLessons"
                 ),
             },
         )
@@ -257,16 +260,17 @@ class MyBusinessService:
             "StartDate": future_course_start_date_filter(now_iso),
             "StatusId": {"$in": [pointer("CourseStatuses", status["status_id"]) for status in open_statuses]},
         }
+        where = with_internal_courses_only_filter(where)
         rows = await self._get_class(
             "Courses",
             {
                 "where": json_dumps(where),
                 "limit": 1000,
                 "order": "StartDate",
-                "include": "StatusId,ProductCategory,ProductId,FacilityId,MainLecturerId,MainClassId",
+                "include": "StatusId,ProductCategory,ProductId,FacilityId,MainLecturerId,MainClassId,ExternalCourse",
                 "keys": (
                     "objectId,Name,StartDate,EndDate,FirstClass,StatusId,ProductCategory,ProductId,FacilityId,"
-                    "MainLecturerId,MainClassId,MaxCapacity,RegisteredStudents,AllowOverBooking,NumberOfLessons"
+                    "MainLecturerId,MainClassId,ExternalCourse,MaxCapacity,RegisteredStudents,AllowOverBooking,NumberOfLessons"
                 ),
             },
         )
@@ -422,17 +426,20 @@ class MyBusinessService:
         return await self._get_object("Accounts", account_id)
 
     async def get_course(self, course_id: str) -> dict[str, Any] | None:
-        return await self._get_object(
+        where = with_internal_courses_only_filter({"objectId": course_id})
+        rows = await self._get_class(
             "Courses",
-            course_id,
             {
-                "include": "StatusId,ProductCategory,ProductId,FacilityId,MainLecturerId,MainClassId",
+                "where": json_dumps(where),
+                "limit": 1,
+                "include": "StatusId,ProductCategory,ProductId,FacilityId,MainLecturerId,MainClassId,ExternalCourse",
                 "keys": (
                     "objectId,Name,StartDate,EndDate,FirstClass,StatusId,ProductCategory,ProductId,FacilityId,"
-                    "MainLecturerId,MainClassId,MaxCapacity,RegisteredStudents,AllowOverBooking,NumberOfLessons"
+                    "MainLecturerId,MainClassId,ExternalCourse,MaxCapacity,RegisteredStudents,AllowOverBooking,NumberOfLessons"
                 ),
             },
         )
+        return rows[0] if rows else None
 
     async def get_sale(self, sale_id: str) -> dict[str, Any] | None:
         return await self._get_object("Sales", sale_id, {"include": "AccountId,SaleStatusId"})
@@ -509,6 +516,28 @@ def json_dumps(payload: dict[str, Any]) -> str:
 
 def pointer(class_name: str, object_id: str) -> dict[str, str]:
     return {"__type": "Pointer", "className": class_name, "objectId": object_id}
+
+
+def with_internal_courses_only_filter(where: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "$and": [
+            where,
+            {
+                "$or": [
+                    {"ExternalCourse": {"$exists": False}},
+                    {"ExternalCourse": None},
+                    {"ExternalCourse": pointer("C_YesNoList", EXTERNAL_COURSE_NO_ID)},
+                ]
+            },
+        ]
+    }
+
+
+def is_external_course(row: dict[str, Any]) -> bool:
+    external_course = row.get("ExternalCourse")
+    if not isinstance(external_course, dict):
+        return False
+    return external_course.get("objectId") == EXTERNAL_COURSE_YES_ID or clean(external_course.get("Name")) == "כן"
 
 
 def future_course_start_date_filter(now_iso: str) -> dict[str, Any]:
@@ -672,6 +701,9 @@ def map_category(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def map_available_course(row: dict[str, Any], category: dict[str, Any]) -> dict[str, Any] | None:
+    if is_external_course(row):
+        return None
+
     max_capacity = row.get("MaxCapacity")
     if max_capacity is None:
         return None
@@ -762,6 +794,8 @@ def validate_course_for_registration(course: dict[str, Any], allow_tentative_cou
         blockers.append("COURSE_IS_TENTATIVE")
     if available_seats is None or available_seats <= 0:
         blockers.append("COURSE_FULL")
+    if is_external_course(course):
+        blockers.append("COURSE_IS_EXTERNAL")
 
     return blockers
 

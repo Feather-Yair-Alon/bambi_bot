@@ -1,11 +1,17 @@
 from app.services.mybusiness import (
+    EXTERNAL_COURSE_NO_ID,
+    EXTERNAL_COURSE_YES_ID,
     future_course_start_date_filter,
     course_row_matches_search,
     course_search_keywords,
+    is_external_course,
     map_available_course,
     match_categories,
     normalize_course_search,
     normalize_identifier_variants,
+    pointer,
+    validate_course_for_registration,
+    with_internal_courses_only_filter,
 )
 
 
@@ -13,6 +19,30 @@ def test_future_course_start_date_filter_requires_course_not_started() -> None:
     now = "2026-07-01T12:00:00.000Z"
 
     assert future_course_start_date_filter(now) == {"$gt": {"__type": "Date", "iso": now}}
+
+
+def test_with_internal_courses_only_filter_allows_missing_or_no_external_flag() -> None:
+    where = {"ProductCategory": pointer("ProductCategories", "cat1")}
+
+    assert with_internal_courses_only_filter(where) == {
+        "$and": [
+            where,
+            {
+                "$or": [
+                    {"ExternalCourse": {"$exists": False}},
+                    {"ExternalCourse": None},
+                    {"ExternalCourse": pointer("C_YesNoList", EXTERNAL_COURSE_NO_ID)},
+                ]
+            },
+        ]
+    }
+
+
+def test_is_external_course_detects_yes_pointer_or_label() -> None:
+    assert is_external_course({"ExternalCourse": pointer("C_YesNoList", EXTERNAL_COURSE_YES_ID)})
+    assert is_external_course({"ExternalCourse": {"objectId": "other", "Name": "כן"}})
+    assert not is_external_course({"ExternalCourse": pointer("C_YesNoList", EXTERNAL_COURSE_NO_ID)})
+    assert not is_external_course({})
 
 
 def test_normalize_identifier_variants_for_israeli_mobile() -> None:
@@ -85,6 +115,19 @@ def test_map_available_course_skips_full_course() -> None:
     assert map_available_course(row, category) is None
 
 
+def test_map_available_course_skips_external_course() -> None:
+    category = {"category_id": "cat1", "name": "×˜×¨×§×˜×•×¨", "code": "80007"}
+    row = {
+        "objectId": "course1",
+        "Name": "×§×•×¨×¡ ×˜×¨×§×˜×•×¨ × ×¢×Ÿ",
+        "MaxCapacity": 10,
+        "RegisteredStudents": 1,
+        "ExternalCourse": pointer("C_YesNoList", EXTERNAL_COURSE_YES_ID),
+    }
+
+    assert map_available_course(row, category) is None
+
+
 def test_map_available_course_returns_positive_capacity() -> None:
     category = {"category_id": "cat1", "name": "מלגזה", "code": "80001"}
     row = {
@@ -105,3 +148,17 @@ def test_map_available_course_returns_positive_capacity() -> None:
     assert course["status"] == "פתוח לרישום"
     assert course["product_price"] is None
     assert "get_course_current_price" in course["price_note"]
+
+
+def test_validate_course_for_registration_blocks_external_course() -> None:
+    row = {
+        "objectId": "course1",
+        "Name": "Forklift course",
+        "StartDate": {"__type": "Date", "iso": "2999-06-19T09:00:00.000Z"},
+        "MaxCapacity": 10,
+        "RegisteredStudents": 1,
+        "StatusId": {"objectId": "U3IMyC5c9H", "Name": "Open", "IsOpen": True},
+        "ExternalCourse": pointer("C_YesNoList", EXTERNAL_COURSE_YES_ID),
+    }
+
+    assert validate_course_for_registration(row) == ["COURSE_IS_EXTERNAL"]

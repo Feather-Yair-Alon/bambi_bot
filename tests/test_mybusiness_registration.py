@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+import json
 from types import SimpleNamespace
 
 from app.services.mybusiness import MyBusinessService, build_course_enrollment_payload, pointer
@@ -21,6 +22,12 @@ class FakeMyBusinessService(MyBusinessService):
         return self.objects.get((table_name, object_id))
 
     async def _get_class(self, table_name: str, params: dict) -> list[dict]:
+        if table_name == "Courses":
+            where = json.loads(params.get("where") or "{}")
+            course_id = find_object_id_filter(where)
+            if course_id:
+                course = self.objects.get(("Courses", course_id))
+                return [course] if course else []
         return self.class_rows.get(table_name, [])
 
     async def _post_class(self, table_name: str, payload: dict) -> dict:
@@ -42,6 +49,23 @@ def open_course(course_id: str = "course1") -> dict:
         "MaxCapacity": 10,
         "RegisteredStudents": 7,
     }
+
+
+def find_object_id_filter(where):
+    if isinstance(where, dict):
+        if isinstance(where.get("objectId"), str):
+            return where["objectId"]
+        for value in where.values():
+            if isinstance(value, list):
+                for item in value:
+                    found = find_object_id_filter(item)
+                    if found:
+                        return found
+            elif isinstance(value, dict):
+                found = find_object_id_filter(value)
+                if found:
+                    return found
+    return None
 
 
 def test_check_customer_registration_eligibility_allows_valid_account_course_and_sale() -> None:
