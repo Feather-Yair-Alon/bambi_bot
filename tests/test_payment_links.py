@@ -17,6 +17,11 @@ class FakeMyBusiness:
             {"objectId": "cat_tractor", "Name": "טרקטור", "Code": "80007"},
             {"objectId": "cat_safety_officers_day", "Name": "יום עיון לקציני בטיחות", "Code": "80049"},
             {"objectId": "cat_discount_only", "Name": "קורס הנחות", "Code": "99999"},
+            {
+                "objectId": "cat_good_instruction",
+                "Name": "\u05d4\u05d3\u05e8\u05db\u05d5\u05ea \u05d1\u05d8\u05d9\u05d7\u05d5\u05ea \u05d5\u05d4\u05d3\u05e8\u05db\u05d4 \u05d8\u05d5\u05d1\u05d4",
+                "Code": "80025",
+            },
         ]
         self.products = [
             {
@@ -67,6 +72,22 @@ class FakeMyBusiness:
                 "IsActive": True,
                 "Category": pointer("ProductCategories", "cat_discount_only"),
             },
+            {
+                "objectId": "prod_safety_training",
+                "Name": "\u05d4\u05d3\u05e8\u05db\u05ea \u05d1\u05d8\u05d9\u05d7\u05d5\u05ea",
+                "CatalogNumber": "80025",
+                "Price": 1995,
+                "IsActive": True,
+                "Category": pointer("ProductCategories", "cat_good_instruction"),
+            },
+            {
+                "objectId": "prod_good_instruction",
+                "Name": "\u05e7\u05d5\u05e8\u05e1 \"\u05d4\u05d3\u05e8\u05db\u05d4 \u05d8\u05d5\u05d1\u05d4\"",
+                "CatalogNumber": "80025",
+                "Price": 2100,
+                "IsActive": True,
+                "Category": pointer("ProductCategories", "cat_good_instruction"),
+            },
         ]
         self.payment_buttons = {
             "btn_forklift_full": {"objectId": "btn_forklift_full", "Name": "קורס מלגזה", "Title": "קורס מלגזה", "Active": True},
@@ -112,6 +133,8 @@ class FakeMyBusiness:
                 rows = [item for item in rows if item.get("Code") == where["Code"]]
             return rows
         if table_name == "Products":
+            if "$or" in where:
+                return [self._include_category(item) for item in self.products if row_matches_search(self._include_category(item), where["$or"])]
             category_id = where.get("Category", {}).get("objectId")
             return [self._include_category(item) for item in self.products if item.get("Category", {}).get("objectId") == category_id]
         if table_name == "PaymentBtnsRows":
@@ -256,6 +279,30 @@ def test_get_course_current_price_uses_payment_row_price() -> None:
     assert result["price_source"] == "PaymentBtnsRows.Price"
     assert result["prices"][0]["price"] == 1000
     assert "payment_url" not in result["prices"][0]
+
+
+def test_get_course_current_price_falls_back_to_matching_product_price() -> None:
+    service = PaymentLinkService(FakeMyBusiness())
+
+    result = run(service.get_course_current_price(category_name="\u05e7\u05d5\u05e8\u05e1 \u05d4\u05d3\u05e8\u05db\u05d4 \u05d8\u05d5\u05d1\u05d4"))
+
+    assert result["found"] is True
+    assert result["requires_user_choice"] is False
+    assert result["price_source"] == "Products.Price fallback"
+    assert result["matched_by"] == "products_api_search"
+    assert result["prices"] == [
+        {
+            "price": 2100,
+            "name": "\u05e7\u05d5\u05e8\u05e1 \"\u05d4\u05d3\u05e8\u05db\u05d4 \u05d8\u05d5\u05d1\u05d4\"",
+            "title": "\u05e7\u05d5\u05e8\u05e1 \"\u05d4\u05d3\u05e8\u05db\u05d4 \u05d8\u05d5\u05d1\u05d4\"",
+            "product_id": "prod_good_instruction",
+            "product_name": "\u05e7\u05d5\u05e8\u05e1 \"\u05d4\u05d3\u05e8\u05db\u05d4 \u05d8\u05d5\u05d1\u05d4\"",
+            "catalog_number": "80025",
+            "category_name": "\u05d4\u05d3\u05e8\u05db\u05d5\u05ea \u05d1\u05d8\u05d9\u05d7\u05d5\u05ea \u05d5\u05d4\u05d3\u05e8\u05db\u05d4 \u05d8\u05d5\u05d1\u05d4",
+            "category_code": "80025",
+            "description_for_bot": "\u05e7\u05d5\u05e8\u05e1 \"\u05d4\u05d3\u05e8\u05db\u05d4 \u05d8\u05d5\u05d1\u05d4\" - 80025 - \u05de\u05d7\u05d9\u05e8 2100",
+        }
+    ]
 
 
 def test_payment_intent_ranks_deposit_first_without_filtering() -> None:

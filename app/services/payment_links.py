@@ -54,6 +54,13 @@ class PaymentLinkService:
         )
         links = payload.get("payment_links") or []
         prices = current_price_options_from_links(links)
+        price_source = "PaymentBtnsRows.Price"
+        if not prices:
+            product_fallback = await self._get_product_price_fallback(category_id, category_code, category_name, product_id)
+            prices = product_fallback.get("prices") or []
+            price_source = product_fallback.get("price_source") or price_source
+            if prices:
+                payload = {**payload, **{key: value for key, value in product_fallback.items() if key != "prices"}}
         return {
             "found": bool(prices),
             "requires_user_choice": len(prices) > 1,
@@ -63,7 +70,7 @@ class PaymentLinkService:
             "prices": prices,
             "restricted_links_summary": payload.get("restricted_links_summary") or [],
             "reason": None if prices else payload.get("reason") or "No current payment price was found.",
-            "price_source": "PaymentBtnsRows.Price",
+            "price_source": price_source,
         }
 
     async def get_course_payment_links(
@@ -332,6 +339,74 @@ class PaymentLinkService:
             },
         )
 
+    async def _get_product_price_fallback(
+        self,
+        category_id: str | None,
+        category_code: str | None,
+        category_name: str | None,
+        product_id: str | None,
+    ) -> dict[str, Any]:
+        product_result = await self._resolve_products_for_price_fallback(category_id, category_code, category_name, product_id)
+        products = product_result.get("products") or []
+        prices = current_price_options_from_products(products, category_name)
+        return {
+            "found": bool(prices),
+            "requires_user_choice": len(prices) > 1,
+            "requires_representative": False,
+            "category": product_result.get("category"),
+            "matched_by": product_result.get("matched_by") or "products_price_fallback",
+            "matched_categories": product_result.get("matched_categories"),
+            "products_count": len(products),
+            "prices": prices,
+            "reason": None if prices else product_result.get("reason") or "No product price fallback was found.",
+            "price_source": "Products.Price fallback",
+        }
+
+    async def _resolve_products_for_price_fallback(
+        self,
+        category_id: str | None,
+        category_code: str | None,
+        category_name: str | None,
+        product_id: str | None,
+    ) -> dict[str, Any]:
+        product_result = await self._resolve_products(category_id, category_code, category_name, product_id)
+        if product_result.get("found"):
+            return product_result
+        if not category_name or category_id or category_code or product_id:
+            return product_result
+
+        products = await self._search_products_once(category_name)
+        if not products:
+            return product_result
+        categories = categories_from_products(products)
+        return {
+            "found": True,
+            "matched_by": "products_api_search",
+            "search": category_name,
+            "category": categories[0] if len(categories) == 1 else None,
+            "matched_categories": categories,
+            "products": products,
+        }
+
+    async def _search_products_once(self, search: str) -> list[dict[str, Any]]:
+        terms = payment_search_terms(search)
+        if not terms:
+            return []
+        fields = ["Name", "CatalogNumber", "Category.Name", "Category.Code"]
+        clauses = []
+        for term in terms:
+            regex = {"$regex": re.escape(term), "$options": "i"}
+            clauses.extend({field: regex} for field in fields)
+        return await self.mybusiness._get_class(
+            "Products",
+            {
+                "where": json_dumps({"$or": clauses}),
+                "limit": 1000,
+                "include": "Category",
+                "keys": "objectId,Name,CatalogNumber,Price,IsActive,Category,createdAt,updatedAt",
+            },
+        )
+
 
 def resolve_category_matches(rows: list[dict[str, Any]]) -> dict[str, Any]:
     if len(rows) == 1:
@@ -471,6 +546,77 @@ def current_price_options_from_links(links: list[dict[str, Any]]) -> list[dict[s
             }
         )
     return prices
+
+
+def current_price_options_from_products(products: list[dict[str, Any]], search: Any = None) -> list[dict[str, Any]]:
+    candidates = [product for product in products if product.get("IsActive") is not False and product.get("Price") is not None]
+    if not candidates:
+        return []
+
+    query = normalize_payment_text(search)
+    if query:
+        scored = [(product_price_match_score(product, query), product) for product in candidates]
+        max_score = max(score for score, _product in scored)
+        if max_score <= 0:
+            return []
+        candidates = [product for score, product in scored if score == max_score]
+
+    return dedupe_product_price_options([format_product_price_option(product) for product in candidates])
+
+
+def product_price_match_score(product: dict[str, Any], query: str) -> int:
+    terms = payment_search_terms(query)
+    product_name = normalize_payment_text(product.get("Name"))
+    catalog_number = normalize_payment_text(product.get("CatalogNumber"))
+    category = product.get("Category") if isinstance(product.get("Category"), dict) else {}
+    category_name = normalize_payment_text(category.get("Name"))
+    category_code = normalize_payment_text(category.get("Code"))
+
+    score = 0
+    if query and query in product_name:
+        score += 100
+    if query and (query in category_name or query in catalog_number or query in category_code):
+        score += 20
+
+    for term in terms:
+        if term in product_name:
+            score += 20
+        if term in catalog_number or term in category_code:
+            score += 5
+        if term in category_name:
+            score += 3
+    return score
+
+
+def format_product_price_option(product: dict[str, Any]) -> dict[str, Any]:
+    category = product.get("Category") if isinstance(product.get("Category"), dict) else {}
+    product_name = clean(product.get("Name"))
+    catalog_number = clean(product.get("CatalogNumber"))
+    price = product.get("Price")
+    description = " - ".join(str(item) for item in [product_name, catalog_number, f"מחיר {price}"] if item)
+    return {
+        "price": price,
+        "name": product_name,
+        "title": product_name,
+        "product_id": product.get("objectId"),
+        "product_name": product_name,
+        "catalog_number": catalog_number,
+        "category_name": clean(category.get("Name")) if isinstance(category, dict) else None,
+        "category_code": clean(category.get("Code")) if isinstance(category, dict) else None,
+        "description_for_bot": description,
+    }
+
+
+def dedupe_product_price_options(options: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    seen: set[tuple[Any, str | None]] = set()
+    unique = []
+    for option in options:
+        key = (option.get("price"), option.get("product_id"))
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(option)
+    return unique
 
 
 def build_payment_url(payment_btn_id: str | None, link_field: Any) -> str | None:
