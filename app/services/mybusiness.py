@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import html
 import re
 from datetime import UTC, datetime
@@ -18,6 +19,16 @@ OPEN_REGISTRATION_COURSE_STATUS_ID = "U3IMyC5c9H"
 INACTIVE_COURSE_STATUS_IDS = {"FbdRzAz07C", "d4YY2V8STP", "elArHVxiHv"}
 EXTERNAL_COURSE_YES_ID = "mVKQuy9lFi"
 EXTERNAL_COURSE_NO_ID = "ZCtaDoTS3G"
+WORK_AT_HEIGHT_CATEGORY_CODE = "80015"
+WORK_AT_HEIGHT_CATEGORY_NAME = "\u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4"
+FORKLIFT_CATEGORY_CODE = "80001"
+FORKLIFT_CATEGORY_NAME = "\u05de\u05dc\u05d2\u05d6\u05d4"
+FORKLIFT_PRACTICAL_CAPACITY = 16
+WORK_AT_HEIGHT_SUBJECTS = {
+    "tankers": "\u05de\u05d9\u05db\u05dc\u05d9\u05d5\u05ea",
+    "constructions": "\u05e7\u05d5\u05e0\u05e1\u05d8\u05e8\u05d5\u05e7\u05e6\u05d9\u05d4",
+    "basket": "\u05e1\u05dc\u05d9 \u05d4\u05e8\u05de\u05d4",
+}
 MIN_COURSE_KEYWORD_LENGTH = 3
 COURSE_SEARCH_STOPWORDS = {
     "course",
@@ -54,6 +65,7 @@ PAYMENT_STATUS_IDS = {
 class MyBusinessService:
     def __init__(self, settings: Settings):
         self.settings = settings
+        self._registration_locks: dict[str, asyncio.Lock] = {}
 
     @property
     def is_configured(self) -> bool:
@@ -73,7 +85,9 @@ class MyBusinessService:
         results: list[dict[str, Any]] = []
         limit = int(params.get("limit") or 1000)
         skip = int(params.get("skip") or 0)
-        base_params = {**params, "limit": limit}
+        max_records = int(params.get("max_records") or 0) or None
+        base_params = {key: value for key, value in params.items() if key != "max_records"}
+        base_params["limit"] = min(limit, max_records) if max_records else limit
 
         async with httpx.AsyncClient(
             base_url=self.settings.mybusiness_base_url.rstrip("/"),
@@ -85,9 +99,11 @@ class MyBusinessService:
                 response.raise_for_status()
                 batch = response.json().get("results", [])
                 results.extend(batch)
-                if len(batch) < limit:
+                if max_records and len(results) >= max_records:
+                    return results[:max_records]
+                if len(batch) < int(base_params["limit"]):
                     break
-                skip += limit
+                skip += int(base_params["limit"])
 
         return results
 
@@ -116,6 +132,19 @@ class MyBusinessService:
             timeout=self.settings.mybusiness_timeout_seconds,
         ) as client:
             response = await client.post(f"/classes/{table_name}", json=payload)
+            response.raise_for_status()
+            return response.json()
+
+    async def _put_object(self, table_name: str, object_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        if not self.is_configured:
+            raise RuntimeError("MyBusiness API credentials are not configured.")
+
+        async with httpx.AsyncClient(
+            base_url=self.settings.mybusiness_base_url.rstrip("/"),
+            headers=self._headers(),
+            timeout=self.settings.mybusiness_timeout_seconds,
+        ) as client:
+            response = await client.put(f"/classes/{table_name}/{object_id}", json=payload)
             response.raise_for_status()
             return response.json()
 
@@ -356,27 +385,47 @@ class MyBusinessService:
         account_id: str,
         course_id: str,
         sale_id: str,
-        payment_status: str,
+        payment_status: str | None = None,
         amount_paid: float = 0,
         comment: str | None = None,
         allow_tentative_courses: bool = False,
         dry_run: bool = False,
-        payment_verified: bool = False,
+        high_work_subjects: str | list[str] | None = None,
     ) -> dict[str, Any]:
-        payment_status = payment_status.strip().upper()
-        if payment_status not in PAYMENT_STATUS_IDS:
+        requested_payment_status = (payment_status or "UNPAID").strip().upper()
+        if requested_payment_status not in PAYMENT_STATUS_IDS:
             return {
                 "created": False,
                 "dry_run": dry_run,
                 "eligibility": {"can_register": False, "blocking_reasons": ["INVALID_PAYMENT_STATUS"]},
             }
-        if not dry_run and not payment_verified:
-            return {
-                "created": False,
-                "dry_run": False,
-                "eligibility": {"can_register": False, "blocking_reasons": ["PAYMENT_NOT_VERIFIED_BY_SYSTEM"]},
-            }
+        lock = self._registration_locks.setdefault(course_id, asyncio.Lock())
+        async with lock:
+            return await self._register_customer_to_course_locked(
+                account_id=account_id,
+                course_id=course_id,
+                sale_id=sale_id,
+                requested_payment_status=requested_payment_status,
+                amount_paid=amount_paid,
+                comment=comment,
+                allow_tentative_courses=allow_tentative_courses,
+                dry_run=dry_run,
+                high_work_subjects=high_work_subjects,
+            )
 
+    async def _register_customer_to_course_locked(
+        self,
+        *,
+        account_id: str,
+        course_id: str,
+        sale_id: str,
+        requested_payment_status: str,
+        amount_paid: float,
+        comment: str | None,
+        allow_tentative_courses: bool,
+        dry_run: bool,
+        high_work_subjects: str | list[str] | None,
+    ) -> dict[str, Any]:
         eligibility = await self.check_customer_registration_eligibility(
             account_id=account_id,
             course_id=course_id,
@@ -396,13 +445,72 @@ class MyBusinessService:
             eligibility = {**eligibility, "can_register": False, "blocking_reasons": latest_blockers}
             return {"created": False, "dry_run": dry_run, "eligibility": eligibility}
 
+        payment_verification = None
+        effective_payment_status = requested_payment_status
+        effective_amount_paid = amount_paid
+        if not dry_run:
+            payment_verification = await self.verify_sale_payment_for_course(
+                sale_id=sale_id,
+                account_id=account_id,
+                course=latest_course,
+            )
+            if not payment_verification.get("verified"):
+                eligibility = {
+                    **eligibility,
+                    "can_register": False,
+                    "blocking_reasons": [payment_verification["blocking_reason"]],
+                }
+                return {
+                    "created": False,
+                    "dry_run": False,
+                    "eligibility": eligibility,
+                    "payment_verification": payment_verification,
+                }
+            effective_payment_status = str(payment_verification["payment_status"])
+            effective_amount_paid = float(payment_verification["amount_paid"])
+
+        normalized_high_work_subjects = normalize_high_work_subjects(high_work_subjects)
+        account_update_payload: dict[str, Any] | None = None
+        previous_high_work_subjects: Any = None
+        if is_work_at_height_course(latest_course):
+            if not normalized_high_work_subjects:
+                eligibility = {**eligibility, "can_register": False, "blocking_reasons": ["HIGH_WORK_SUBJECTS_REQUIRED"]}
+                return {
+                    "created": False,
+                    "dry_run": dry_run,
+                    "eligibility": eligibility,
+                    "required_high_work_subjects": list(WORK_AT_HEIGHT_SUBJECTS.values()),
+                }
+            account = await self.get_account(account_id)
+            previous_high_work_subjects = account.get("HighWorkSubjects") if account else None
+            merged_subjects = merge_high_work_subjects(previous_high_work_subjects, normalized_high_work_subjects)
+            if merged_subjects != previous_high_work_subjects:
+                account_update_payload = {"HighWorkSubjects": merged_subjects}
+
+        forklift_practical_assignment = await self.resolve_forklift_practical_assignment(latest_course)
+        if forklift_practical_assignment and not forklift_practical_assignment.get("selected_actual_date"):
+            eligibility = {
+                **eligibility,
+                "can_register": False,
+                "blocking_reasons": [forklift_practical_assignment["blocking_reason"]],
+            }
+            return {
+                "created": False,
+                "dry_run": dry_run,
+                "eligibility": eligibility,
+                "forklift_practical_assignment": forklift_practical_assignment,
+            }
+
         payload = build_course_enrollment_payload(
             account_id=account_id,
             course=latest_course,
             sale_id=sale_id,
-            payment_status=payment_status,
-            amount_paid=amount_paid,
+            payment_status=effective_payment_status,
+            amount_paid=effective_amount_paid,
             comment=comment,
+            actual_date=(
+                forklift_practical_assignment.get("selected_actual_date") if forklift_practical_assignment else None
+            ),
         )
         if dry_run:
             return {
@@ -410,20 +518,39 @@ class MyBusinessService:
                 "dry_run": True,
                 "eligibility": eligibility,
                 "would_create_payload": payload,
+                "would_update_account_payload": account_update_payload,
+                "forklift_practical_assignment": forklift_practical_assignment,
             }
 
-        created = await self.create_course_enrollment(payload)
-        enrollment_id = created.get("objectId")
-        created_enrollment = await self.read_course_enrollment(enrollment_id) if enrollment_id else None
+        account_update_result = None
+        if account_update_payload:
+            account_update_result = await self.update_account(account_id, account_update_payload)
+        try:
+            created = await self.create_course_enrollment(payload)
+            enrollment_id = created.get("objectId")
+            if not enrollment_id:
+                raise RuntimeError("MyBusiness did not return an enrollment id.")
+        except Exception:
+            if account_update_payload:
+                await self.update_account(account_id, {"HighWorkSubjects": previous_high_work_subjects})
+            raise
+
+        created_enrollment = await self.read_course_enrollment(enrollment_id)
         return {
-            "created": bool(enrollment_id),
+            "created": True,
             "dry_run": False,
             "eligibility": eligibility,
+            "payment_verification": payment_verification,
+            "updated_account": account_update_result,
             "created_enrollment": summarize_enrollment(created_enrollment or created),
+            "forklift_practical_assignment": forklift_practical_assignment,
         }
 
     async def get_account(self, account_id: str) -> dict[str, Any] | None:
         return await self._get_object("Accounts", account_id)
+
+    async def update_account(self, account_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._put_object("Accounts", account_id, payload)
 
     async def get_course(self, course_id: str) -> dict[str, Any] | None:
         where = with_internal_courses_only_filter({"objectId": course_id})
@@ -442,7 +569,110 @@ class MyBusinessService:
         return rows[0] if rows else None
 
     async def get_sale(self, sale_id: str) -> dict[str, Any] | None:
-        return await self._get_object("Sales", sale_id, {"include": "AccountId,SaleStatusId"})
+        return await self._get_object(
+            "Sales",
+            sale_id,
+            {
+                "include": "AccountId,SaleStatusId",
+                "keys": (
+                    "objectId,AccountId,SaleStatusId,Total,TotalIncludingVat,AmountPaid,"
+                    "IsInvoiced,SignedPriceQuote,createdAt,updatedAt"
+                ),
+            },
+        )
+
+    async def get_sale_rows(self, sale_id: str) -> list[dict[str, Any]]:
+        return await self._get_class(
+            "SaleRows",
+            {
+                "where": json_dumps({"SaleId": pointer("Sales", sale_id)}),
+                "limit": 1000,
+                "include": "SaleId,ProductId,CategoryId,AccountId",
+                "keys": "objectId,SaleId,ProductId,CategoryId,AccountId,Quantity,PricePerUnit,Total,TotalIncludingVat",
+            },
+        )
+
+    async def verify_sale_payment_for_course(
+        self,
+        *,
+        sale_id: str,
+        account_id: str,
+        course: dict[str, Any],
+    ) -> dict[str, Any]:
+        sale = await self.get_sale(sale_id)
+        if sale is None:
+            return payment_verification_failure("SALE_NOT_FOUND")
+        if not sale_belongs_to_account(sale, account_id):
+            return payment_verification_failure("SALE_DOES_NOT_BELONG_TO_ACCOUNT")
+
+        sale_rows = await self.get_sale_rows(sale_id)
+        if not any(sale_row_matches_course(row, course) for row in sale_rows):
+            return payment_verification_failure("SALE_DOES_NOT_MATCH_COURSE")
+
+        amount_paid = number_value(sale.get("AmountPaid")) or 0.0
+        total = number_value(sale.get("TotalIncludingVat"))
+        if total is None:
+            total = number_value(sale.get("Total"))
+
+        if sale.get("IsInvoiced") is True:
+            payment_status = "COMPANY_INVOICE"
+        elif amount_paid <= 0:
+            return payment_verification_failure("PAYMENT_NOT_VERIFIED_BY_SYSTEM")
+        elif total is not None and total > 0 and amount_paid + 0.01 >= total:
+            payment_status = "PAID"
+        else:
+            payment_status = "PARTIAL"
+
+        return {
+            "verified": True,
+            "source": "MyBusiness.Sales",
+            "sale_id": sale_id,
+            "payment_status": payment_status,
+            "amount_paid": amount_paid,
+            "sale_total": total,
+        }
+
+    async def find_verified_course_payment(self, identifier: str, course_id: str) -> dict[str, Any]:
+        customers = await self.find_existing_customer(identifier)
+        course = await self.get_course(course_id)
+        if course is None:
+            return {"verified": False, "blocking_reason": "COURSE_NOT_FOUND"}
+
+        for customer in customers.get("customers") or []:
+            account_id = customer.get("account_id")
+            if not account_id:
+                continue
+            sales = await self._get_class(
+                "Sales",
+                {
+                    "where": json_dumps({"AccountId": pointer("Accounts", account_id)}),
+                    "limit": 50,
+                    "order": "-createdAt",
+                    "include": "AccountId,SaleStatusId",
+                    "keys": (
+                        "objectId,AccountId,SaleStatusId,Total,TotalIncludingVat,AmountPaid,"
+                        "IsInvoiced,SignedPriceQuote,createdAt,updatedAt"
+                    ),
+                    "max_records": 50,
+                },
+            )
+            for sale in sales:
+                sale_id = sale.get("objectId")
+                if not sale_id:
+                    continue
+                verification = await self.verify_sale_payment_for_course(
+                    sale_id=sale_id,
+                    account_id=account_id,
+                    course=course,
+                )
+                if verification.get("verified"):
+                    return {**verification, "account_id": account_id, "course_id": course_id}
+
+        return {
+            "verified": False,
+            "blocking_reason": "VERIFIED_COURSE_PAYMENT_NOT_FOUND",
+            "source": "MyBusiness.Sales",
+        }
 
     async def get_future_active_enrollments(self, account_id: str) -> list[dict[str, Any]]:
         rows = await self._get_class(
@@ -462,6 +692,77 @@ class MyBusinessService:
             if is_future_active_enrollment(row):
                 enrollments.append(summarize_existing_enrollment(row))
         return enrollments
+
+    async def resolve_forklift_practical_assignment(self, course: dict[str, Any]) -> dict[str, Any] | None:
+        if not is_forklift_course(course):
+            return None
+
+        course_id = course.get("objectId")
+        if not course_id:
+            return {
+                "required": True,
+                "selected_actual_date": None,
+                "blocking_reason": "FORKLIFT_COURSE_ID_MISSING",
+                "options": [],
+                "capacity_per_practical_date": FORKLIFT_PRACTICAL_CAPACITY,
+            }
+
+        rows = await self._get_class(
+            "CourseEnrollment",
+            {
+                "where": json_dumps({"CourseId": pointer("Courses", course_id)}),
+                "limit": 1000,
+                "include": "CourseEnrollmentStatusId",
+                "keys": "objectId,ActualDate,CourseEnrollmentStatusId,CourseId",
+            },
+        )
+
+        day_counts: dict[str, int] = {}
+        for row in rows:
+            day_key = calendar_date_key(row.get("ActualDate"))
+            if not day_key:
+                continue
+            day_counts.setdefault(day_key, 0)
+            if is_registered_enrollment(row):
+                day_counts[day_key] += 1
+
+        # EndDate is the only course-level fallback available when the second
+        # practical date has not received its first enrollment yet.
+        start_day = calendar_date_key(course.get("StartDate"))
+        end_day = calendar_date_key(course.get("EndDate"))
+        if end_day and end_day != start_day:
+            day_counts.setdefault(end_day, 0)
+
+        options = [
+            {
+                "actual_date": actual_date_from_day_key(day_key),
+                "registered_students": registered_students,
+                "capacity": FORKLIFT_PRACTICAL_CAPACITY,
+                "available_seats": max(0, FORKLIFT_PRACTICAL_CAPACITY - registered_students),
+                "is_full": registered_students >= FORKLIFT_PRACTICAL_CAPACITY,
+            }
+            for day_key, registered_students in sorted(day_counts.items())
+        ]
+        selected = next((option for option in options if not option["is_full"]), None)
+
+        if selected:
+            return {
+                "required": True,
+                "selected_actual_date": selected["actual_date"],
+                "selected": selected,
+                "options": options,
+                "capacity_per_practical_date": FORKLIFT_PRACTICAL_CAPACITY,
+            }
+
+        return {
+            "required": True,
+            "selected_actual_date": None,
+            "blocking_reason": (
+                "FORKLIFT_PRACTICAL_DATES_FULL" if options else "FORKLIFT_PRACTICAL_DATES_NOT_FOUND"
+            ),
+            "options": options,
+            "capacity_per_practical_date": FORKLIFT_PRACTICAL_CAPACITY,
+        }
 
     async def create_course_enrollment(self, payload: dict[str, Any]) -> dict[str, Any]:
         return await self._post_class("CourseEnrollment", payload)
@@ -538,6 +839,65 @@ def is_external_course(row: dict[str, Any]) -> bool:
     if not isinstance(external_course, dict):
         return False
     return external_course.get("objectId") == EXTERNAL_COURSE_YES_ID or clean(external_course.get("Name")) == "כן"
+
+
+def is_work_at_height_course(row: dict[str, Any]) -> bool:
+    category = row.get("ProductCategory") if isinstance(row.get("ProductCategory"), dict) else {}
+    name = normalize_text(category.get("Name"))
+    code = normalize_text(category.get("Code"))
+    course_name = normalize_text(row.get("Name"))
+    return code == WORK_AT_HEIGHT_CATEGORY_CODE or name == WORK_AT_HEIGHT_CATEGORY_NAME or WORK_AT_HEIGHT_CATEGORY_NAME in course_name
+
+
+def is_forklift_course(row: dict[str, Any]) -> bool:
+    category = row.get("ProductCategory") if isinstance(row.get("ProductCategory"), dict) else {}
+    name = normalize_text(category.get("Name"))
+    code = normalize_text(category.get("Code"))
+    course_name = normalize_text(row.get("Name"))
+    if code == FORKLIFT_CATEGORY_CODE or name == FORKLIFT_CATEGORY_NAME:
+        return True
+    excluded_name_markers = ("\u05e8\u05e2\u05e0\u05d5\u05df", "\u05de\u05d3\u05e8\u05d9\u05da", "\u05de\u05d3\u05e8\u05d9\u05db\u05d9")
+    return FORKLIFT_CATEGORY_NAME in course_name and not any(marker in course_name for marker in excluded_name_markers)
+
+
+def normalize_high_work_subjects(value: str | list[str] | None) -> str | None:
+    if value is None:
+        return None
+    raw_items = value if isinstance(value, list) else re.split(r"[,;/|]+|\n+", str(value))
+    raw_text = normalize_text(" ".join(str(item) for item in raw_items))
+    if not raw_text:
+        return None
+
+    selected: list[str] = []
+    subject_aliases = {
+        WORK_AT_HEIGHT_SUBJECTS["tankers"]: ("tank", "\u05de\u05d9\u05db\u05dc", "\u05de\u05db\u05dc", "\u05de\u05d9\u05db\u05dc\u05d9\u05d5\u05ea", "\u05de\u05db\u05dc\u05d9\u05d5\u05ea"),
+        WORK_AT_HEIGHT_SUBJECTS["constructions"]: (
+            "construction",
+            "\u05e7\u05d5\u05e0\u05e1\u05d8\u05e8\u05d5\u05e7\u05e6",
+            "\u05e7\u05d5\u05e0\u05e1\u05d8\u05e8\u05d5\u05e7\u05e6\u05d9\u05d4",
+            "\u05e7\u05d5\u05e0\u05e1\u05d8\u05e8\u05d5\u05e7\u05e6\u05d9\u05d5\u05ea",
+        ),
+        WORK_AT_HEIGHT_SUBJECTS["basket"]: (
+            "basket",
+            "\u05e1\u05dc\u05d9",
+            "\u05e1\u05dc",
+            "\u05d4\u05e8\u05de\u05d4",
+            "\u05e1\u05dc\u05d9 \u05d4\u05e8\u05de\u05d4",
+        ),
+    }
+    for canonical, aliases in subject_aliases.items():
+        if any(alias in raw_text for alias in aliases):
+            selected.append(canonical)
+
+    if not selected:
+        return None
+    return ", ".join(dict.fromkeys(selected))
+
+
+def merge_high_work_subjects(existing: Any, selected: str) -> str:
+    existing_normalized = normalize_high_work_subjects(str(existing or ""))
+    combined = ", ".join(item for item in (existing_normalized, selected) if item)
+    return normalize_high_work_subjects(combined) or selected
 
 
 def future_course_start_date_filter(now_iso: str) -> dict[str, Any]:
@@ -769,6 +1129,17 @@ def parse_datetime(value: Any) -> datetime | None:
     return parsed.astimezone(UTC)
 
 
+def calendar_date_key(value: Any) -> str | None:
+    parsed = parse_datetime(value)
+    if parsed is None:
+        return None
+    return parsed.date().isoformat()
+
+
+def actual_date_from_day_key(day_key: str) -> str:
+    return f"{day_key}T00:00:00.000Z"
+
+
 def calculate_available_seats(course: dict[str, Any]) -> int | None:
     max_capacity = course.get("MaxCapacity")
     if max_capacity is None:
@@ -817,9 +1188,45 @@ def is_future_active_enrollment(enrollment: dict[str, Any]) -> bool:
     )
 
 
+def is_registered_enrollment(enrollment: dict[str, Any]) -> bool:
+    enrollment_status = enrollment.get("CourseEnrollmentStatusId") or {}
+    return isinstance(enrollment_status, dict) and (
+        enrollment_status.get("objectId") == REGISTERED_ENROLLMENT_STATUS_ID
+        or enrollment_status.get("IsRegistered") is True
+    )
+
+
 def sale_belongs_to_account(sale: dict[str, Any], account_id: str) -> bool:
     account = sale.get("AccountId")
     return isinstance(account, dict) and account.get("objectId") == account_id
+
+
+def sale_row_matches_course(row: dict[str, Any], course: dict[str, Any]) -> bool:
+    row_product = row.get("ProductId") if isinstance(row.get("ProductId"), dict) else {}
+    row_category = row.get("CategoryId") if isinstance(row.get("CategoryId"), dict) else {}
+    course_product = course.get("ProductId") if isinstance(course.get("ProductId"), dict) else {}
+    course_category = course.get("ProductCategory") if isinstance(course.get("ProductCategory"), dict) else {}
+    product_id = course_product.get("objectId")
+    category_id = course_category.get("objectId")
+    return bool(
+        (product_id and row_product.get("objectId") == product_id)
+        or (category_id and row_category.get("objectId") == category_id)
+    )
+
+
+def number_value(value: Any) -> float | None:
+    try:
+        return float(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def payment_verification_failure(reason: str) -> dict[str, Any]:
+    return {
+        "verified": False,
+        "source": "MyBusiness.Sales",
+        "blocking_reason": reason,
+    }
 
 
 def summarize_account(account: dict[str, Any]) -> dict[str, Any]:
@@ -879,10 +1286,11 @@ def build_course_enrollment_payload(
     payment_status: str,
     amount_paid: float = 0,
     comment: str | None = None,
+    actual_date: str | None = None,
 ) -> dict[str, Any]:
     now_iso = datetime.now(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
     course_date = parse_date(course.get("StartDate")) or now_iso
-    return {
+    payload = {
         "AccountId": pointer("Accounts", account_id),
         "AccountMainId": pointer("Accounts", account_id),
         "CourseId": pointer("Courses", course["objectId"]),
@@ -899,6 +1307,9 @@ def build_course_enrollment_payload(
         "SignedFIle": False,
         "allowWithoutSigned": True,
     }
+    if actual_date:
+        payload["ActualDate"] = date_value(actual_date)
+    return payload
 
 
 def summarize_enrollment(enrollment: dict[str, Any]) -> dict[str, Any]:

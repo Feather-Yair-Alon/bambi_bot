@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -199,6 +199,20 @@ class Database:
                 "SELECT role, content, created_at FROM chat_messages WHERE session_id=? ORDER BY id",
                 (session_id,),
             ).fetchall()
+
+    def prune_chat_history(self, retention_days: int) -> list[str]:
+        cutoff = (datetime.now(UTC) - timedelta(days=max(1, retention_days))).isoformat()
+        with self.connection() as conn:
+            rows = conn.execute(
+                "SELECT session_id FROM chat_sessions WHERE updated_at < ?",
+                (cutoff,),
+            ).fetchall()
+            session_ids = [str(row["session_id"]) for row in rows]
+            if session_ids:
+                placeholders = ",".join("?" for _ in session_ids)
+                conn.execute(f"DELETE FROM chat_messages WHERE session_id IN ({placeholders})", session_ids)
+                conn.execute(f"DELETE FROM chat_sessions WHERE session_id IN ({placeholders})", session_ids)
+            return session_ids
 
     def start_ingestion_run(self, source_type: str) -> int:
         with self.connection() as conn:

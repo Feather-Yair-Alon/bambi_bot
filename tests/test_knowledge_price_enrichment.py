@@ -30,6 +30,7 @@ def test_safe_current_price_payload_removes_payment_button_ids() -> None:
     assert payload["found"] is True
     assert payload["prices"][0]["price"] == 1000
     assert "payment_btn_id" not in payload["prices"][0]
+    assert payload["vat_note"] == "Prices are excluding VAT unless explicitly marked as VAT included."
 
 
 def test_build_price_content_section_single_price_tells_agent_to_use_api_price() -> None:
@@ -43,6 +44,7 @@ def test_build_price_content_section_single_price_tells_agent_to_use_api_price()
 
     assert "המחיר המעודכן הוא 1,000 ש\"ח" in section
     assert "חובה להשתמש רק במחירים בסעיף זה" in section
+    assert "לא כולל מע\"מ" in section
     assert "PaymentBtnsRows.Price" in section
 
 

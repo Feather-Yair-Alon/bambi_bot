@@ -4,7 +4,7 @@ import json
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
 
 from app.config import Settings, get_settings
@@ -18,20 +18,43 @@ from app.schemas import (
     SourceStatus,
     SourcesStatusResponse,
 )
+from app.security import SlidingWindowRateLimiter, prune_agent_sessions, sanitize_persisted_history
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    get_db().init_schema()
+    settings = get_settings()
+    db = get_db()
+    db.init_schema()
+    removed_sessions = db.prune_chat_history(settings.chat_history_retention_days)
+    prune_agent_sessions(settings.session_db_path, removed_sessions)
+    sanitize_persisted_history(settings.sqlite_path, settings.session_db_path)
     yield
 
 
 app = FastAPI(title="Bambi Knowledge Agent", version="0.1.0", lifespan=lifespan)
+chat_rate_limiter = SlidingWindowRateLimiter(get_settings().chat_rate_limit_per_minute)
 
 
 def require_admin_token(admin_api_token: str = Header(default="", alias="X-Admin-Token"), settings: Settings = Depends(get_settings)) -> None:
     if admin_api_token != settings.admin_api_token:
         raise HTTPException(status_code=401, detail="Invalid admin token")
+
+
+async def enforce_chat_rate_limit(request: Request) -> None:
+    client_host = request.client.host if request.client else "unknown"
+    if not await chat_rate_limiter.allow(client_host):
+        raise HTTPException(status_code=429, detail="Too many chat requests. Try again shortly.")
+
+
+def require_existing_session(session_id: str) -> None:
+    if get_agent_service().get_session(session_id) is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+
+def enforce_message_length(payload: ChatMessageRequest, settings: Settings) -> None:
+    if len(payload.message) > settings.chat_message_max_length:
+        raise HTTPException(status_code=413, detail="Chat message is too long")
 
 
 @app.get("/health")
@@ -197,20 +220,35 @@ async def home() -> str:
 """
 
 
-@app.post("/chat/sessions", response_model=ChatSessionCreateResponse)
+@app.post(
+    "/chat/sessions",
+    response_model=ChatSessionCreateResponse,
+    dependencies=[Depends(enforce_chat_rate_limit)],
+)
 async def create_session():
     session_id, created_at = get_agent_service().create_session()
     return ChatSessionCreateResponse(session_id=session_id, created_at=created_at)
 
 
-@app.post("/chat/sessions/{session_id}/messages", response_model=ChatMessageResponse)
-async def send_message(session_id: str, payload: ChatMessageRequest):
+@app.post(
+    "/chat/sessions/{session_id}/messages",
+    response_model=ChatMessageResponse,
+    dependencies=[Depends(enforce_chat_rate_limit)],
+)
+async def send_message(session_id: str, payload: ChatMessageRequest, settings: Settings = Depends(get_settings)):
+    require_existing_session(session_id)
+    enforce_message_length(payload, settings)
     response = await get_agent_service().ask(session_id, payload.message)
     return ChatMessageResponse(session_id=session_id, response=response, created_at=datetime.now(UTC))
 
 
-@app.post("/chat/sessions/{session_id}/messages/stream")
-async def stream_message(session_id: str, payload: ChatMessageRequest):
+@app.post(
+    "/chat/sessions/{session_id}/messages/stream",
+    dependencies=[Depends(enforce_chat_rate_limit)],
+)
+async def stream_message(session_id: str, payload: ChatMessageRequest, settings: Settings = Depends(get_settings)):
+    require_existing_session(session_id)
+    enforce_message_length(payload, settings)
     async def events():
         async for event in get_agent_service().ask_stream(session_id, payload.message):
             yield json.dumps(event, ensure_ascii=False) + "\n"
@@ -218,7 +256,7 @@ async def stream_message(session_id: str, payload: ChatMessageRequest):
     return StreamingResponse(events(), media_type="application/x-ndjson")
 
 
-@app.get("/chat/sessions/{session_id}")
+@app.get("/chat/sessions/{session_id}", dependencies=[Depends(require_admin_token)])
 async def get_session(session_id: str):
     session = get_agent_service().get_session(session_id)
     if not session:

@@ -34,8 +34,10 @@ def safe_current_price_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "reason": None if found else payload.get("reason") or "No current payment price was found.",
         "instruction": (
             "Use only these current prices when answering about price. "
-            "Ignore any prices that appear inside the course content."
+            "Ignore any prices that appear inside the course content. "
+            "Prices from this payload are excluding VAT unless a specific price explicitly says it includes VAT."
         ),
+        "vat_note": "Prices are excluding VAT unless explicitly marked as VAT included.",
     }
 
 
@@ -54,6 +56,11 @@ def build_price_content_section(price_payload: dict[str, Any]) -> str:
         f"מקור המחיר: {price_payload.get('price_source') or PRICE_SOURCE}.",
         "חובה להשתמש רק במחירים בסעיף זה ולהתעלם ממחירים שמופיעים בגוף תוכן הקורס אם הם שונים.",
     ]
+
+    lines.append(
+        'VAT note: prices in this section are excluding VAT unless explicitly marked as VAT included. '
+        'When answering in Hebrew, say "לא כולל מע"מ".'
+    )
 
     if len(prices) == 1:
         lines.append(f"המחיר המעודכן הוא {_format_price(prices[0].get('price'))}.")

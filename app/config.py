@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     host: str = Field(default="0.0.0.0", alias="HOST")
     port: int = Field(default=8000, alias="PORT")
     admin_api_token: str = Field(default="change-me", alias="ADMIN_API_TOKEN")
+    chat_rate_limit_per_minute: int = Field(default=20, alias="CHAT_RATE_LIMIT_PER_MINUTE")
+    chat_message_max_length: int = Field(default=4000, alias="CHAT_MESSAGE_MAX_LENGTH")
+    chat_history_retention_days: int = Field(default=7, alias="CHAT_HISTORY_RETENTION_DAYS")
 
     data_dir: Path = Field(default=Path("./data"), alias="DATA_DIR")
     sqlite_path: Path = Field(default=Path("./data/bambi.db"), alias="SQLITE_PATH")
@@ -48,6 +51,8 @@ class Settings(BaseSettings):
     ingest_on_startup: bool = Field(default=False, alias="INGEST_ON_STARTUP")
 
     def model_post_init(self, __context: object) -> None:
+        if self.app_env != "development" and self.admin_api_token == "change-me":
+            raise ValueError("ADMIN_API_TOKEN must be changed outside development.")
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.sqlite_path.parent.mkdir(parents=True, exist_ok=True)
         self.session_db_path.parent.mkdir(parents=True, exist_ok=True)

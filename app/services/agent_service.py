@@ -23,6 +23,7 @@ from app.services.knowledge_price_enrichment import (
 from app.services.knowledge_files import KnowledgeFileService
 from app.services.mybusiness import MyBusinessService
 from app.services.payment_links import PaymentLinkService, is_approved_dynamic_payment_url
+from app.security import RedactingSession, redact_sensitive_text
 
 
 @dataclass
@@ -63,8 +64,8 @@ class AgentService:
 
     async def ask(self, session_id: str, message: str) -> AgentAnswer:
         self.db.upsert_session(session_id)
-        self.db.add_message(session_id, "user", message)
-        session = SQLiteSession(session_id, db_path=str(self.settings.session_db_path))
+        self.db.add_message(session_id, "user", redact_sensitive_text(message))
+        session = RedactingSession(SQLiteSession(session_id, db_path=str(self.settings.session_db_path)))
         context = AgentContext(session_id=session_id)
 
         try:
@@ -94,13 +95,17 @@ class AgentService:
             )
             self.db.add_message(session_id, "system", f"Output guardrail: {exc}")
 
-        self.db.add_message(session_id, "assistant", output.model_dump_json(ensure_ascii=False))
+        self.db.add_message(
+            session_id,
+            "assistant",
+            redact_sensitive_text(output.model_dump_json(ensure_ascii=False)),
+        )
         return self._client_output(output)
 
     async def ask_stream(self, session_id: str, message: str) -> AsyncIterator[dict[str, Any]]:
         self.db.upsert_session(session_id)
-        self.db.add_message(session_id, "user", message)
-        session = SQLiteSession(session_id, db_path=str(self.settings.session_db_path))
+        self.db.add_message(session_id, "user", redact_sensitive_text(message))
+        session = RedactingSession(SQLiteSession(session_id, db_path=str(self.settings.session_db_path)))
         context = AgentContext(session_id=session_id)
 
         yield {"type": "status", "message": "מחפש מידע מתאים..."}
@@ -127,7 +132,6 @@ class AgentService:
                         delta = getattr(data, "delta", "")
                         if delta:
                             chunks.append(delta)
-                            yield {"type": "delta", "delta": delta}
 
             answer = "".join(chunks).strip() or str(result.final_output or "").strip()
             output = AgentAnswer(
@@ -137,6 +141,9 @@ class AgentService:
                 needs_human_review=False,
                 follow_up_question=None,
             )
+            # Output guardrails finish with the run. Release buffered text only after they pass.
+            for start in range(0, len(answer), 48):
+                yield {"type": "delta", "delta": answer[start : start + 48]}
         except InputGuardrailTripwireTriggered as exc:
             output = AgentAnswer(
                 answer="אני יכול לעזור רק בשאלות על הקורסים, השירותים והמידע המאושר של מכללת במבי.",
@@ -156,7 +163,11 @@ class AgentService:
             )
             self.db.add_message(session_id, "system", f"Output guardrail: {exc}")
 
-        self.db.add_message(session_id, "assistant", output.model_dump_json(ensure_ascii=False))
+        self.db.add_message(
+            session_id,
+            "assistant",
+            redact_sensitive_text(output.model_dump_json(ensure_ascii=False)),
+        )
         yield {"type": "final", "response": self._client_output(output).model_dump(mode="json")}
 
     def _client_output(self, output: AgentAnswer) -> AgentAnswer:
@@ -166,7 +177,14 @@ class AgentService:
         if self._agent is None:
             self._agent = Agent(
                 name="BambiKnowledgeAgent",
-                instructions=self._instructions() + self._mybusiness_instructions() + self._sales_flow_instructions(),
+                instructions=(
+                    self._instructions()
+                    + self._vat_price_instructions()
+                    + self._work_at_height_registration_instructions()
+                    + self._forklift_registration_instructions()
+                    + self._mybusiness_instructions()
+                    + self._sales_flow_instructions()
+                ),
                 model=self.settings.openai_model,
                 output_type=AgentAnswer,
                 tools=self._build_tools(),
@@ -179,13 +197,53 @@ class AgentService:
         if self._streaming_agent is None:
             self._streaming_agent = Agent(
                 name="BambiKnowledgeStreamingAgent",
-                instructions=self._streaming_instructions() + self._mybusiness_instructions() + self._sales_flow_instructions(),
+                instructions=(
+                    self._streaming_instructions()
+                    + self._vat_price_instructions()
+                    + self._work_at_height_registration_instructions()
+                    + self._forklift_registration_instructions()
+                    + self._mybusiness_instructions()
+                    + self._sales_flow_instructions()
+                ),
                 model=self.settings.openai_model,
                 tools=self._build_tools(),
                 input_guardrails=[self._input_guardrail()],
                 output_guardrails=[self._stream_output_guardrail()],
             )
         return self._streaming_agent
+
+    def _vat_price_instructions(self) -> str:
+        return """
+
+VAT and price wording:
+All prices returned from MyBusiness, payment tools, current_price, row_price, product prices, or payment rows are before VAT by default.
+Whenever you mention a price from these tools, explicitly say in the user's language that the price is excluding VAT.
+In Hebrew, use wording such as: "המחיר המעודכן הוא ... ש"ח לא כולל מע"מ".
+Only say "כולל מע"מ" if the specific tool output or approved source explicitly states that this exact price includes VAT.
+If the tool output does not specify VAT status, assume the price is excluding VAT. Do not calculate VAT or invent a VAT-included total.
+"""
+
+    def _work_at_height_registration_instructions(self) -> str:
+        return """
+
+Work-at-height registration:
+For a regular work-at-height course / הדרכת עבודה בגובה, before sending the user to final registration or before calling register_customer_to_course, ask which work-at-height topics the student needs.
+The allowed topics are exactly: מיכליות, קונסטרוקציה, סלי הרמה.
+The user may choose one or more topics. If the user is unsure, ask one short clarification question about the type of work they perform.
+When calling register_customer_to_course for a work-at-height course, pass the chosen topics in high_work_subjects as a comma-separated Hebrew string.
+Do not invent a topic outside the allowed list. If no topic was selected, do not register the user; ask for the missing topic selection.
+"""
+
+    def _forklift_registration_instructions(self) -> str:
+        return """
+
+Forklift registration practical assignment:
+For forklift course registration / קורס מלגזה, the practical date is not selected freely by the user.
+The register_customer_to_course tool automatically selects the first available practical assignment date by capacity, with a hard limit of 16 registered students per practical date.
+Do not promise or manually choose a practical date before register_customer_to_course returns its result.
+If register_customer_to_course returns forklift_practical_assignment.selected_actual_date, tell the user the practical assignment date selected by the system.
+If the tool returns FORKLIFT_PRACTICAL_DATES_FULL or FORKLIFT_PRACTICAL_DATES_NOT_FOUND, do not bypass it and do not register manually; transfer to a representative using the relevant contact channel.
+"""
 
     def _streaming_instructions(self) -> str:
         return """
@@ -338,8 +396,8 @@ class AgentService:
 2. ודא שהקורס והמועד המבוקש ברורים. עבור מועדים השתמש ב-list_course_categories ואז find_available_course_dates.
 3. בקש מהלקוח את הפרטים הנדרשים לתשלום/רישום: שם מלא, מספר טלפון, תעודת זהות ומייל.
 4. השתמש ב-get_course_payment_links כדי להביא לינק/אפשרויות תשלום. אם יש כמה אפשרויות, שאל את הלקוח איזו מתאימה לו.
-5. לאחר שהלקוח אומר ששילם, יש לבדוק תשלום מול המערכת. אין להסתמך רק על אמירה או צילום מסך.
-6. רק אם בשלב שאחרי התשלום יש account_id ו-sale_id מאומתים ממקור מערכת, ניתן להשתמש בכלי check_customer_registration_eligibility ו-register_customer_to_course. אם אין אותם, העבר לנציג להשלמת רישום פנימי, אבל אל תגיד שההרשמה הראשונית או התשלום נחסמו בגלל שאין לקוח קיים.
+5. לאחר שהלקוח אומר ששילם, קרא ל-find_verified_course_payment עם תעודת הזהות או הטלפון וה-course_id שנבחר. אין להסתמך רק על אמירה או צילום מסך.
+6. רק אם find_verified_course_payment מחזיר verified=true, השתמש ב-account_id וב-sale_id שהוא החזיר עבור check_customer_registration_eligibility ו-register_customer_to_course. אם אין אימות, העבר לנציג להשלמת בירור התשלום.
 7. אם הכלי מחזיר blocking_reasons, אל תעקוף אותם ואל תנסה להירשם שוב ללא שינוי בפרטים.
 8. לעולם אל תציג למשתמש payload פנימי, מזהי מערכת לא נחוצים, מפתחות API או פלט גולמי של הכלים.
 """
@@ -378,11 +436,11 @@ class AgentService:
 4. לאחר תשלום:
 בקש מהלקוח לעדכן כשהתשלום הסתיים. אם הלקוח אומר שהוא שילם, חובה לבדוק מול MyBusiness לפני רישום.
 אין להסתמך רק על אמירה של הלקוח או צילום מסך כראיית תשלום סופית.
-אם אין דרך לאמת במערכת שהתשלום בוצע או שאין sale_id/account_id מתאים ממקור מערכת אחרי התשלום, העבר לנציג להשלמת הרישום הפנימי. אל תציג זאת כחסימה בגלל שהלקוח לא היה קיים לפני התשלום.
+קרא ל-find_verified_course_payment עם מזהה הלקוח וה-course_id שנבחר. רק verified=true הוא אימות תשלום תקף. אם אין אימות, העבר לנציג להשלמת בירור התשלום.
 
 5. רישום לקורס:
 רישום פנימי לקורס דרך register_customer_to_course מתבצע רק אחרי תשלום מאומת ורק אם יש account_id ו-sale_id ממקור מערכת. אין לבצע או לדרוש בדיקת לקוח קיים לפני שליחת לינק התשלום.
-רק לאחר שיש account_id ממקור מערכת, קורס ומועד מוסכמים, עמידה בדרישות, תשלום מאומת, sale_id מתאים ו-payment_status מפורש - השתמש ב-check_customer_registration_eligibility.
+רק לאחר ש-find_verified_course_payment החזיר account_id ו-sale_id מאומתים, וקיימים קורס ומועד מוסכמים ועמידה בדרישות, השתמש ב-check_customer_registration_eligibility.
 אם הזכאות תקינה, השתמש ב-register_customer_to_course.
 ברירת המחדל היא dry_run=true. dry_run=false מותר רק אם התשלום אומת ויש בקשה מפורשת לבצע רישום אמיתי.
 
@@ -640,23 +698,25 @@ class AgentService:
             account_id: str,
             course_id: str,
             sale_id: str,
-            payment_status: str,
-            amount_paid: float = 0,
             comment: str | None = None,
             allow_tentative_courses: bool = False,
             dry_run: bool = True,
+            high_work_subjects: str | None = None,
         ) -> dict[str, Any]:
-            """Register an existing MyBusiness customer to a course after full eligibility checks. Defaults to dry_run."""
+            """Register an existing MyBusiness customer to a course after full eligibility checks. Defaults to dry_run.
+
+            For regular work-at-height courses, high_work_subjects is required and should contain the selected topics:
+            מיכליות, קונסטרוקציה, and/or סלי הרמה.
+            """
             try:
                 payload = await service.mybusiness.register_customer_to_course(
                     account_id=account_id,
                     course_id=course_id,
                     sale_id=sale_id,
-                    payment_status=payment_status,
-                    amount_paid=amount_paid,
                     comment=comment,
                     allow_tentative_courses=allow_tentative_courses,
                     dry_run=dry_run,
+                    high_work_subjects=high_work_subjects,
                 )
             except Exception as exc:  # noqa: BLE001 - tool should return structured failure to the agent.
                 payload = {
@@ -671,11 +731,10 @@ class AgentService:
                     "account_id": account_id,
                     "course_id": course_id,
                     "sale_id": sale_id,
-                    "payment_status": payment_status,
-                    "amount_paid": amount_paid,
                     "comment_provided": bool(comment),
                     "allow_tentative_courses": allow_tentative_courses,
                     "dry_run": dry_run,
+                    "high_work_subjects_provided": bool(high_work_subjects),
                 },
                 {
                     "created": payload.get("created"),
@@ -683,6 +742,29 @@ class AgentService:
                     "eligibility": payload.get("eligibility"),
                 },
                 bool(payload.get("created") or payload.get("dry_run")),
+            )
+            return payload
+
+        async def find_verified_course_payment(identifier: str, course_id: str) -> dict[str, Any]:
+            """Find a MyBusiness sale and verify its payment and course match using system data only."""
+            try:
+                payload = await service.mybusiness.find_verified_course_payment(identifier, course_id)
+            except Exception as exc:  # noqa: BLE001 - tool should return structured failure to the agent.
+                payload = {
+                    "verified": False,
+                    "blocking_reason": type(exc).__name__,
+                    "source": "MyBusiness.Sales",
+                }
+            service.db.log_tool_call(
+                None,
+                "find_verified_course_payment",
+                {"identifier_provided": bool(identifier), "course_id": course_id},
+                {
+                    "verified": payload.get("verified"),
+                    "blocking_reason": payload.get("blocking_reason"),
+                    "payment_status": payload.get("payment_status"),
+                },
+                bool(payload.get("verified")),
             )
             return payload
 
@@ -806,6 +888,7 @@ class AgentService:
                 function_tool(find_existing_customer),
                 function_tool(list_course_categories),
                 function_tool(find_available_course_dates),
+                function_tool(find_verified_course_payment),
                 function_tool(check_customer_registration_eligibility),
                 function_tool(register_customer_to_course),
                 function_tool(get_course_current_price),

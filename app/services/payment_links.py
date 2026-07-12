@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 from app.services.mybusiness import clean, json_dumps, normalize_text, pointer
 
@@ -10,6 +11,8 @@ TENANT_DOMAIN = "6a09b3ab-e66c-64a7-7dbc-06c797b56505.mbapps.co.il"
 PAYMENT_URL_BASE = f"https://{TENANT_DOMAIN}/apps/mybooks/payment-btn-page?cls=PaymentBtns&oid="
 REQUIRED_CUSTOMER_DETAILS = ["שם מלא", "מספר טלפון", "תעודת זהות", "מייל"]
 PAYMENT_INTENTS = {"FULL", "DEPOSIT", "REFRESHER", "FRIDAY", "THEORY", "PRACTICAL", "EXAM", "GENERAL"}
+WORK_AT_HEIGHT_CATEGORY_CODE = "80015"
+WORK_AT_HEIGHT_CATEGORY_NAME = "\u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4"
 DISCOUNT_KEYWORDS = ("הנחה", "אחוז הנחה", "10 אחוז", "15 אחוז", "discount")
 PAYMENT_SEARCH_STOPWORDS = {
     "course",
@@ -155,6 +158,11 @@ class PaymentLinkService:
             seen_links.add(dedupe_key)
             payment_links.append(link)
 
+        if is_regular_work_at_height_query(category_name):
+            regular_links = [link for link in payment_links if is_regular_work_at_height_link(link)]
+            if regular_links:
+                payment_links = regular_links
+
         payment_links = rank_links_by_payment_intent(payment_links, intent)
         restricted_links = dedupe_restricted_links(restricted_links)
 
@@ -224,7 +232,13 @@ class PaymentLinkService:
         category = category_result["category"]
         products = await self._get_products_for_category(category["category_id"])
         active_or_unspecified = [product for product in products if product.get("IsActive") is not False]
-        return {"found": True, "category": category, "products": active_or_unspecified or products, "all_category_products": products}
+        return {
+            "found": True,
+            "category": category,
+            "products": active_or_unspecified or products,
+            "all_category_products": products,
+            "matched_by": category_result.get("matched_by"),
+        }
 
     async def _resolve_category_products_after_payment_miss(self, product_result: dict[str, Any]) -> dict[str, Any]:
         category = product_result.get("category") or {}
@@ -276,6 +290,19 @@ class PaymentLinkService:
             },
         )
         query = normalize_payment_text(category_name)
+        if is_regular_work_at_height_query(category_name):
+            work_at_height = [
+                row
+                for row in rows
+                if normalize_payment_text(row.get("Code")) == WORK_AT_HEIGHT_CATEGORY_CODE
+                or normalize_payment_text(row.get("Name")) == WORK_AT_HEIGHT_CATEGORY_NAME
+            ]
+            if work_at_height:
+                return {
+                    **resolve_category_matches(work_at_height),
+                    "matched_by": "regular_work_at_height_alias",
+                }
+
         exact = [row for row in rows if normalize_payment_text(row.get("Name")) == query]
         if exact:
             return resolve_category_matches(exact)
@@ -630,10 +657,18 @@ def build_payment_url(payment_btn_id: str | None, link_field: Any) -> str | None
 
 def is_approved_dynamic_payment_url(url: str) -> bool:
     cleaned = str(url or "").rstrip(".,;:!?")
-    return (
-        cleaned.startswith(f"https://{TENANT_DOMAIN}/apps/mybooks/payment-btn-page")
-        and "cls=PaymentBtns" in cleaned
-        and "oid=" in cleaned
+    parsed = urlparse(cleaned)
+    query = parse_qs(parsed.query, keep_blank_values=True)
+    return bool(
+        parsed.scheme == "https"
+        and parsed.hostname == TENANT_DOMAIN
+        and parsed.username is None
+        and parsed.password is None
+        and parsed.port in (None, 443)
+        and parsed.path == "/apps/mybooks/payment-btn-page"
+        and query.get("cls") == ["PaymentBtns"]
+        and len(query.get("oid", [])) == 1
+        and re.fullmatch(r"[A-Za-z0-9_-]+", query["oid"][0] or "")
     )
 
 
@@ -687,6 +722,64 @@ def rank_links_by_payment_intent(links: list[dict[str, Any]], intent: str) -> li
     if intent == "GENERAL":
         return links
     return sorted(links, key=lambda link: intent_score(link, intent), reverse=True)
+
+
+def is_regular_work_at_height_query(value: Any) -> bool:
+    text = normalize_payment_text(value)
+    if not text:
+        return False
+
+    has_height = WORK_AT_HEIGHT_CATEGORY_NAME in text or "\u05d1\u05d2\u05d5\u05d1\u05d4" in text or "\u05d2\u05d5\u05d1\u05d4" in text
+    if not has_height:
+        return False
+
+    excluded = (
+        "\u05e8\u05e2\u05e0\u05d5\u05df",
+        "\u05e8\u05d9\u05e2\u05e0\u05d5\u05df",
+        "\u05de\u05d3\u05e8\u05d9\u05da",
+        "\u05de\u05d3\u05e8\u05d9\u05db\u05d9",
+        "\u05de\u05d3\u05e8\u05d9\u05db\u05d9\u05dd",
+        "\u05e6\u05d9\u05d5\u05d3",
+        "\u05d7\u05d1\u05e8\u05d4",
+    )
+    if any(term in text for term in excluded):
+        return False
+
+    regular_markers = (
+        "\u05e7\u05d5\u05e8\u05e1",
+        "\u05d4\u05d3\u05e8\u05db\u05d4",
+        "\u05e8\u05d0\u05e9\u05d5\u05e0\u05d9",
+        "\u05e8\u05d2\u05d9\u05dc",
+        WORK_AT_HEIGHT_CATEGORY_NAME,
+    )
+    return any(term in text for term in regular_markers)
+
+
+def is_regular_work_at_height_link(link: dict[str, Any]) -> bool:
+    product = link.get("product") or {}
+    text = normalize_payment_text(
+        " ".join(
+            str(item or "")
+            for item in [
+                link.get("name"),
+                link.get("title"),
+                link.get("description_for_bot"),
+                product.get("product_name"),
+                product.get("catalog_number"),
+            ]
+        )
+    )
+    if WORK_AT_HEIGHT_CATEGORY_CODE not in text and WORK_AT_HEIGHT_CATEGORY_NAME not in text and "\u05d1\u05d2\u05d5\u05d1\u05d4" not in text:
+        return False
+    excluded = (
+        "\u05e8\u05e2\u05e0\u05d5\u05df",
+        "\u05e8\u05d9\u05e2\u05e0\u05d5\u05df",
+        "\u05de\u05d3\u05e8\u05d9\u05da",
+        "\u05de\u05d3\u05e8\u05d9\u05db\u05d9",
+        "\u05de\u05d3\u05e8\u05d9\u05db\u05d9\u05dd",
+        "\u05e6\u05d9\u05d5\u05d3",
+    )
+    return not any(term in text for term in excluded)
 
 
 def intent_score(link: dict[str, Any], intent: str) -> int:

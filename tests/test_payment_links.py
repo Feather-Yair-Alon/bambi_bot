@@ -22,6 +22,8 @@ class FakeMyBusiness:
                 "Name": "\u05d4\u05d3\u05e8\u05db\u05d5\u05ea \u05d1\u05d8\u05d9\u05d7\u05d5\u05ea \u05d5\u05d4\u05d3\u05e8\u05db\u05d4 \u05d8\u05d5\u05d1\u05d4",
                 "Code": "80025",
             },
+            {"objectId": "cat_work_at_height", "Name": "\u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4", "Code": "80015"},
+            {"objectId": "cat_work_at_height_instructor_refresh", "Name": "\u05e8\u05e2\u05e0\u05d5\u05df \u05de\u05d3\u05e8\u05d9\u05da \u05d2\u05d5\u05d1\u05d4", "Code": "80018"},
         ]
         self.products = [
             {
@@ -88,6 +90,22 @@ class FakeMyBusiness:
                 "IsActive": True,
                 "Category": pointer("ProductCategories", "cat_good_instruction"),
             },
+            {
+                "objectId": "prod_work_at_height",
+                "Name": "\u05e2\u05d1\u05d5\u05e8 \u05d4\u05d3\u05e8\u05db\u05ea \u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4",
+                "CatalogNumber": "80015",
+                "Price": 407,
+                "IsActive": True,
+                "Category": pointer("ProductCategories", "cat_work_at_height"),
+            },
+            {
+                "objectId": "prod_work_at_height_instructor_refresh",
+                "Name": "\u05e2\u05d1\u05d5\u05e8 \u05d4\u05e9\u05ea\u05dc\u05de\u05d5\u05ea \u05e8\u05e2\u05e0\u05d5\u05df \u05dc\u05de\u05d3\u05e8\u05d9\u05db\u05d9 \u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4",
+                "CatalogNumber": "80018",
+                "Price": 600,
+                "IsActive": True,
+                "Category": pointer("ProductCategories", "cat_work_at_height_instructor_refresh"),
+            },
         ]
         self.payment_buttons = {
             "btn_forklift_full": {"objectId": "btn_forklift_full", "Name": "קורס מלגזה", "Title": "קורס מלגזה", "Active": True},
@@ -103,6 +121,24 @@ class FakeMyBusiness:
                 "Active": True,
             },
             "btn_discount_only": {"objectId": "btn_discount_only", "Name": "15 אחוז הנחה", "Active": True},
+            "btn_work_at_height": {
+                "objectId": "btn_work_at_height",
+                "Name": "\u05d4\u05d3\u05e8\u05db\u05ea \u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4",
+                "Title": "\u05d3\u05e3 \u05ea\u05e9\u05dc\u05d5\u05dd \u05d4\u05d3\u05e8\u05db\u05ea \u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4",
+                "Active": True,
+            },
+            "btn_work_at_height_refresh": {
+                "objectId": "btn_work_at_height_refresh",
+                "Name": "\u05e8\u05d9\u05e2\u05e0\u05d5\u05df \u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4",
+                "Title": "\u05d4\u05d3\u05e8\u05db\u05ea \u05e8\u05d9\u05e2\u05e0\u05d5\u05df \u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4",
+                "Active": True,
+            },
+            "btn_work_at_height_instructor_refresh": {
+                "objectId": "btn_work_at_height_instructor_refresh",
+                "Name": "\u05d3\u05e3 \u05ea\u05e9\u05dc\u05d5\u05dd \u05e8\u05d9\u05e2\u05e0\u05d5\u05df \u05de\u05d3\u05e8\u05d9\u05db\u05d9 \u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4",
+                "Title": "\u05d3\u05e3 \u05ea\u05e9\u05dc\u05d5\u05dd \u05e8\u05d9\u05e2\u05e0\u05d5\u05df \u05de\u05d3\u05e8\u05d9\u05db\u05d9 \u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4",
+                "Active": True,
+            },
         }
         self.rows = [
             row("row_f1", "btn_forklift_full", "prod_forklift", "קורס מלגזה מלא", 1102),
@@ -113,6 +149,15 @@ class FakeMyBusiness:
             row("row_t2", "btn_tractor_discount", "prod_tractor", "10 אחוז הנחה", 2000),
             row("row_tachograph", "btn_tachograph", "prod_tachograph", "השתלמות טכוגרף דיגיטלי לקציני בטיחות", 1000),
             row("row_d1", "btn_discount_only", "prod_discount_only", "הנחה", 100),
+            row("row_h1", "btn_work_at_height", "prod_work_at_height", "\u05e2\u05d1\u05d5\u05e8 \u05d4\u05d3\u05e8\u05db\u05ea \u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4", 407),
+            row("row_h2", "btn_work_at_height_refresh", "prod_work_at_height", "\u05e2\u05d1\u05d5\u05e8 \u05d4\u05d3\u05e8\u05db\u05ea \u05e8\u05d9\u05e2\u05e0\u05d5\u05df \u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4", 356),
+            row(
+                "row_h3",
+                "btn_work_at_height_instructor_refresh",
+                "prod_work_at_height_instructor_refresh",
+                "\u05e8\u05d9\u05e2\u05e0\u05d5\u05df \u05de\u05d3\u05e8\u05d9\u05db\u05d9 \u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4",
+                500,
+            ),
         ]
 
     async def _get_object(self, table_name: str, object_id: str, params: dict[str, Any] | None = None) -> dict[str, Any] | None:
@@ -303,6 +348,22 @@ def test_get_course_current_price_falls_back_to_matching_product_price() -> None
             "description_for_bot": "\u05e7\u05d5\u05e8\u05e1 \"\u05d4\u05d3\u05e8\u05db\u05d4 \u05d8\u05d5\u05d1\u05d4\" - 80025 - \u05de\u05d7\u05d9\u05e8 2100",
         }
     ]
+
+
+def test_regular_work_at_height_query_uses_regular_course_price() -> None:
+    service = PaymentLinkService(FakeMyBusiness())
+
+    result = run(
+        service.get_course_current_price(
+            category_name="\u05e7\u05d5\u05e8\u05e1 \u05d1\u05d2\u05d5\u05d1\u05d4 \u05e8\u05d0\u05e9\u05d5\u05e0\u05d9 \u05e8\u05d2\u05d9\u05dc"
+        )
+    )
+
+    assert result["found"] is True
+    assert result["requires_user_choice"] is False
+    assert result["matched_by"] == "regular_work_at_height_alias"
+    assert result["prices"][0]["price"] == 407
+    assert result["prices"][0]["payment_btn_id"] == "btn_work_at_height"
 
 
 def test_payment_intent_ranks_deposit_first_without_filtering() -> None:

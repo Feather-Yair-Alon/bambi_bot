@@ -29,7 +29,7 @@ class ChatSessionCreateResponse(BaseModel):
 
 
 class ChatMessageRequest(BaseModel):
-    message: str = Field(min_length=1)
+    message: str = Field(min_length=1, max_length=4000)
 
 
 class ChatMessageResponse(BaseModel):

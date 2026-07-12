@@ -9,3 +9,7 @@ data/
 secert key
 *.pem
 bambi-known-hosts
+/payment_link_inspection_output.json
+/payment_buttons_mapping_output.json
+/test.py
+/test2.py
