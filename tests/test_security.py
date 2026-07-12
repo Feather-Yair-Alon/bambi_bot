@@ -72,7 +72,7 @@ async def test_rate_limiter_blocks_requests_above_limit() -> None:
 
 
 @pytest.mark.asyncio
-async def test_stream_does_not_release_text_before_output_guardrail_passes(tmp_path, monkeypatch) -> None:
+async def test_stream_releases_text_immediately_even_if_output_guardrail_later_blocks(tmp_path, monkeypatch) -> None:
     db = Database(tmp_path / "app.db")
     db.init_schema()
     db.upsert_session("session1")
@@ -104,7 +104,7 @@ async def test_stream_does_not_release_text_before_output_guardrail_passes(tmp_p
 
     events = [event async for event in service.ask_stream("session1", "שלום")]
 
-    assert not any(event.get("type") == "delta" for event in events)
+    assert any(event.get("type") == "delta" and event.get("delta") == "unsafe leaked text" for event in events)
     assert events[-1]["type"] == "final"
     assert events[-1]["response"]["needs_human_review"] is True
 

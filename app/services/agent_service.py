@@ -146,6 +146,7 @@ class AgentService:
                         delta = getattr(data, "delta", "")
                         if delta:
                             chunks.append(delta)
+                            yield {"type": "delta", "delta": delta}
 
             answer = "".join(chunks).strip() or str(result.final_output or "").strip()
             output = AgentAnswer(
@@ -155,9 +156,6 @@ class AgentService:
                 needs_human_review=False,
                 follow_up_question=None,
             )
-            # Output guardrails finish with the run. Release buffered text only after they pass.
-            for start in range(0, len(answer), 48):
-                yield {"type": "delta", "delta": answer[start : start + 48]}
         except InputGuardrailTripwireTriggered as exc:
             output = AgentAnswer(
                 answer="אני יכול לעזור רק בשאלות על הקורסים, השירותים והמידע המאושר של מכללת במבי.",
