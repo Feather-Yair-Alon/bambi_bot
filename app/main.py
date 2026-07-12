@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 
@@ -19,6 +20,9 @@ from app.schemas import (
     SourcesStatusResponse,
 )
 from app.security import SlidingWindowRateLimiter, prune_agent_sessions, sanitize_persisted_history
+
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -250,8 +254,22 @@ async def stream_message(session_id: str, payload: ChatMessageRequest, settings:
     require_existing_session(session_id)
     enforce_message_length(payload, settings)
     async def events():
-        async for event in get_agent_service().ask_stream(session_id, payload.message):
-            yield json.dumps(event, ensure_ascii=False) + "\n"
+        try:
+            async for event in get_agent_service().ask_stream(session_id, payload.message):
+                yield json.dumps(event, ensure_ascii=False) + "\n"
+        except Exception:  # noqa: BLE001 - never terminate a chunked response without a final event.
+            logger.exception("Unhandled chat stream error")
+            fallback = {
+                "type": "final",
+                "response": {
+                    "answer": "אירעה תקלה זמנית בבדיקת המידע. אפשר לנסות שוב בעוד רגע.",
+                    "citations": [],
+                    "confidence": "low",
+                    "needs_human_review": True,
+                    "follow_up_question": None,
+                },
+            }
+            yield json.dumps(fallback, ensure_ascii=False) + "\n"
 
     return StreamingResponse(events(), media_type="application/x-ndjson")
 

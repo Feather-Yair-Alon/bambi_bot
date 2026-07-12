@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 import uuid
 from dataclasses import dataclass
@@ -24,6 +25,9 @@ from app.services.knowledge_files import KnowledgeFileService
 from app.services.mybusiness import MyBusinessService
 from app.services.payment_links import PaymentLinkService, is_approved_dynamic_payment_url
 from app.security import RedactingSession, redact_sensitive_text
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -94,6 +98,16 @@ class AgentService:
                 follow_up_question="אפשר לחדד איזה קורס או פרט אתה צריך?",
             )
             self.db.add_message(session_id, "system", f"Output guardrail: {exc}")
+        except Exception as exc:  # noqa: BLE001 - return a stable chat response on provider/tool failures.
+            logger.exception("Agent response failed")
+            output = AgentAnswer(
+                answer="אירעה תקלה זמנית בבדיקת המידע. אפשר לנסות שוב בעוד רגע.",
+                citations=[],
+                confidence="low",
+                needs_human_review=True,
+                follow_up_question=None,
+            )
+            self.db.add_message(session_id, "system", f"Agent error: {type(exc).__name__}")
 
         self.db.add_message(
             session_id,
@@ -162,6 +176,16 @@ class AgentService:
                 follow_up_question="אפשר לחדד איזה קורס או פרט אתה צריך?",
             )
             self.db.add_message(session_id, "system", f"Output guardrail: {exc}")
+        except Exception as exc:  # noqa: BLE001 - keep the NDJSON stream well formed on provider/tool failures.
+            logger.exception("Agent streaming response failed")
+            output = AgentAnswer(
+                answer="אירעה תקלה זמנית בבדיקת המידע. אפשר לנסות שוב בעוד רגע.",
+                citations=[],
+                confidence="low",
+                needs_human_review=True,
+                follow_up_question=None,
+            )
+            self.db.add_message(session_id, "system", f"Agent stream error: {type(exc).__name__}")
 
         self.db.add_message(
             session_id,
