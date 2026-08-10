@@ -4,7 +4,7 @@ import re
 from typing import Any
 
 from app.services.mybusiness import pointer
-from app.services.payment_links import PaymentLinkService, REQUIRED_CUSTOMER_DETAILS
+from app.services.payment_links import PaymentLinkService, REQUIRED_CUSTOMER_DETAILS, is_stale_dated_payment_link
 
 
 class FakeMyBusiness:
@@ -43,10 +43,26 @@ class FakeMyBusiness:
                 "Category": pointer("ProductCategories", "cat_forklift"),
             },
             {
+                "objectId": "prod_forklift_thai",
+                "Name": "קורס מלגזה לתאילנדים",
+                "CatalogNumber": "80001",
+                "Price": 1391,
+                "IsActive": True,
+                "Category": None,
+            },
+            {
                 "objectId": "prod_forklift_refresh",
                 "Name": "רענון מלגזה",
                 "CatalogNumber": "80003",
                 "Price": 339,
+                "IsActive": True,
+                "Category": pointer("ProductCategories", "cat_forklift_refresh"),
+            },
+            {
+                "objectId": "prod_forklift_refresh_company",
+                "Name": "רענון מלגזה לחברה",
+                "CatalogNumber": "80003-C",
+                "Price": 1700,
                 "IsActive": True,
                 "Category": pointer("ProductCategories", "cat_forklift_refresh"),
             },
@@ -181,7 +197,11 @@ class FakeMyBusiness:
             if "$or" in where:
                 return [self._include_category(item) for item in self.products if row_matches_search(self._include_category(item), where["$or"])]
             category_id = where.get("Category", {}).get("objectId")
-            return [self._include_category(item) for item in self.products if item.get("Category", {}).get("objectId") == category_id]
+            return [
+                self._include_category(item)
+                for item in self.products
+                if isinstance(item.get("Category"), dict) and item["Category"].get("objectId") == category_id
+            ]
         if table_name == "PaymentBtnsRows":
             if "$or" in where:
                 return [self._include_row(row_data) for row_data in self.rows if row_matches_search(self._include_row(row_data), where["$or"])]
@@ -190,7 +210,8 @@ class FakeMyBusiness:
         return []
 
     def _include_category(self, product: dict[str, Any]) -> dict[str, Any]:
-        category_id = product.get("Category", {}).get("objectId")
+        category_ref = product.get("Category") if isinstance(product.get("Category"), dict) else {}
+        category_id = category_ref.get("objectId")
         category = next((item for item in self.categories if item["objectId"] == category_id), None)
         return {**product, "Category": category or product.get("Category")}
 
@@ -348,6 +369,49 @@ def test_get_course_current_price_falls_back_to_matching_product_price() -> None
             "description_for_bot": "\u05e7\u05d5\u05e8\u05e1 \"\u05d4\u05d3\u05e8\u05db\u05d4 \u05d8\u05d5\u05d1\u05d4\" - 80025 - \u05de\u05d7\u05d9\u05e8 2100",
         }
     ]
+
+
+def test_work_at_height_instructor_refresher_uses_specific_category_alias() -> None:
+    service = PaymentLinkService(FakeMyBusiness())
+
+    result = run(service.get_course_current_price(category_name="ריענון מדריכי עבודה בגובה"))
+
+    assert result["found"] is True
+    assert result["category"]["category_code"] == "80018"
+    assert {price["price"] for price in result["prices"]} == {500}
+
+
+def test_past_year_payment_campaign_is_not_current() -> None:
+    link = {
+        "name": "ריענון מדריכי גובה 5.12.2022",
+        "title": "תשלום",
+        "description_for_bot": "מחיר ישן",
+        "product": {"product_name": "ריענון מדריכי גובה"},
+    }
+
+    assert is_stale_dated_payment_link(link, current_year=2026)
+
+
+def test_language_specific_price_does_not_fall_back_to_generic_forklift_price() -> None:
+    service = PaymentLinkService(FakeMyBusiness())
+
+    thai = run(service.get_course_current_price(category_name="קורס מלגזה בתאית"))
+    english = run(service.get_course_current_price(category_name="קורס מלגזה באנגלית"))
+
+    assert thai["price_source"] == "Products.Price fallback"
+    assert [price["price"] for price in thai["prices"]] == [1391]
+    assert english["found"] is False
+    assert english["prices"] == []
+
+
+def test_company_forklift_refresher_price_is_separate_from_individual() -> None:
+    service = PaymentLinkService(FakeMyBusiness())
+
+    company = run(service.get_course_current_price(category_name="רענון מלגזה לחברה"))
+    individual = run(service.get_course_current_price(category_name="רענון מלגזה לבודד"))
+
+    assert [price["price"] for price in company["prices"]] == [1700]
+    assert [price["price"] for price in individual["prices"]] == [339]
 
 
 def test_regular_work_at_height_query_uses_regular_course_price() -> None:

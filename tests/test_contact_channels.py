@@ -7,7 +7,7 @@ def test_forklift_uses_dedicated_forklift_whatsapp() -> None:
     result = service.find_course_contact("קורס מלגזה")
 
     assert result["found"] is True
-    assert result["contact"]["owner"] == "מרינה"
+    assert result["contact"]["owner"] == "נציג/ת מלגזות"
     assert result["contact"]["phone"] == "054-968-8028"
 
 
@@ -56,4 +56,4 @@ def test_unknown_course_falls_back_to_office_contact() -> None:
     result = service.find_course_contact("קורס לא ידוע")
 
     assert result["found"] is False
-    assert result["fallback"]["phone"] == "074-70-87-030"
+    assert result["fallback"]["phone"] == "08-859-2779"

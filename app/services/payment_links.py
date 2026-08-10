@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import re
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from app.services.mybusiness import clean, json_dumps, normalize_text, pointer
+from app.services.course_catalog import detect_course_language, resolve_course_category_code, text_matches_language
 
 
 TENANT_DOMAIN = "6a09b3ab-e66c-64a7-7dbc-06c797b56505.mbapps.co.il"
@@ -125,7 +127,11 @@ class PaymentLinkService:
         rows = product_result.get("payment_rows") or await self._get_payment_rows_for_products(
             [product["objectId"] for product in products if product.get("objectId")]
         )
-        if not rows:
+        exact_product_search = product_result.get("matched_by") in {
+            "language_specific_products_api_search",
+            "company_forklift_refresher_products_api_search",
+        }
+        if not rows and not exact_product_search:
             fallback = await self._resolve_category_products_after_payment_miss(product_result)
             if fallback.get("found"):
                 product_result = fallback
@@ -152,6 +158,8 @@ class PaymentLinkService:
                 continue
 
             link = format_payment_link(payment_btn, row, product)
+            if is_stale_dated_payment_link(link):
+                continue
             dedupe_key = (link.get("payment_btn_id"), link.get("product", {}).get("product_id"), str(link.get("row_price")))
             if dedupe_key in seen_links:
                 continue
@@ -210,6 +218,38 @@ class PaymentLinkService:
                 return not_found("Product was not found.")
             category = map_category_ref(product.get("Category"))
             return {"found": True, "category": category, "products": [product]}
+
+        if is_company_forklift_refresher_query(category_name) and not category_id and not category_code:
+            category_result = await self._resolve_category(None, "80003", None)
+            category = category_result.get("category") or {}
+            products = await self._get_products_for_category(category.get("category_id")) if category.get("category_id") else []
+            company_products = [product for product in products if is_company_forklift_refresher_product(product)]
+            if company_products:
+                return {
+                    "found": True,
+                    "matched_by": "company_forklift_refresher_products_api_search",
+                    "search": category_name,
+                    "category": category,
+                    "matched_categories": [category],
+                    "products": company_products,
+                }
+            return not_found("No approved company forklift refresher product was found.")
+
+        language = detect_course_language(category_name)
+        if language and language != "עברית" and category_name and not category_id and not category_code:
+            products = await self._search_products_once(category_name)
+            language_products = [product for product in products if text_matches_language(product.get("Name"), language)]
+            if language_products:
+                categories = categories_from_products(language_products)
+                return {
+                    "found": True,
+                    "matched_by": "language_specific_products_api_search",
+                    "search": category_name,
+                    "category": categories[0] if len(categories) == 1 else None,
+                    "matched_categories": categories,
+                    "products": language_products,
+                }
+            return not_found(f"No approved {language} product was found for this course.")
 
         category_result = await self._resolve_category(category_id, category_code, category_name)
         if not category_result.get("found"):
@@ -290,6 +330,14 @@ class PaymentLinkService:
             },
         )
         query = normalize_payment_text(category_name)
+        alias_code = resolve_course_category_code(category_name)
+        if alias_code:
+            aliased = [row for row in rows if normalize_payment_text(row.get("Code")) == alias_code]
+            if aliased:
+                return {
+                    **resolve_category_matches(aliased),
+                    "matched_by": "course_category_alias",
+                }
         if is_regular_work_at_height_query(category_name):
             work_at_height = [
                 row
@@ -398,6 +446,8 @@ class PaymentLinkService:
     ) -> dict[str, Any]:
         product_result = await self._resolve_products(category_id, category_code, category_name, product_id)
         if product_result.get("found"):
+            return product_result
+        if detect_course_language(category_name) or is_company_forklift_refresher_query(category_name):
             return product_result
         if not category_name or category_id or category_code or product_id:
             return product_result
@@ -573,6 +623,44 @@ def current_price_options_from_links(links: list[dict[str, Any]]) -> list[dict[s
             }
         )
     return prices
+
+
+def is_stale_dated_payment_link(link: dict[str, Any], current_year: int | None = None) -> bool:
+    """Reject links whose label explicitly identifies a past-year campaign."""
+    year = current_year or datetime.now(UTC).year
+    product = link.get("product") or {}
+    text = " ".join(
+        str(value or "")
+        for value in (
+            link.get("name"),
+            link.get("title"),
+            link.get("description_for_bot"),
+            product.get("product_name"),
+        )
+    )
+    embedded_years = {int(match) for match in re.findall(r"\b20\d{2}\b", text)}
+    return bool(embedded_years and max(embedded_years) < year)
+
+
+def is_company_forklift_refresher_query(value: Any) -> bool:
+    text = normalize_payment_text(value).replace("ריענון", "רענון")
+    return bool(
+        "מלגזה" in text
+        and "רענון" in text
+        and any(marker in text for marker in ("חברה", "חברות", "קבוצה", "ארגון", "מפעל"))
+    )
+
+
+def is_company_forklift_refresher_product(product: dict[str, Any]) -> bool:
+    text = normalize_payment_text(product.get("Name")).replace("ריענון", "רענון")
+    individual_markers = ("תלמיד", "בודד", "יחיד")
+    company_markers = ("שנתי", "חברה", "חברות", "קבוצה", "ארגון", "מפעל")
+    return bool(
+        "מלגזה" in text
+        and "רענון" in text
+        and any(marker in text for marker in company_markers)
+        and not any(marker in text for marker in individual_markers)
+    )
 
 
 def current_price_options_from_products(products: list[dict[str, Any]], search: Any = None) -> list[dict[str, Any]]:

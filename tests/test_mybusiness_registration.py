@@ -376,7 +376,15 @@ def test_work_at_height_registration_requires_subjects() -> None:
 
     assert result["created"] is False
     assert result["eligibility"]["blocking_reasons"] == ["HIGH_WORK_SUBJECTS_REQUIRED"]
-    assert result["required_high_work_subjects"] == ["מיכליות", "קונסטרוקציה", "סלי הרמה"]
+    assert result["required_high_work_subjects"] == [
+        "סולמות",
+        "גגות",
+        "קונסטרוקציה",
+        "פיגומים נייחים",
+        "בימות הרמה מתרוממות ופיגומים ממוכנים",
+        "סלי הרמה",
+        "מקום מוקף (כולל מיכליות)",
+    ]
     assert service.posts == []
     assert service.puts == []
 
@@ -403,7 +411,7 @@ def test_work_at_height_registration_dry_run_includes_account_subject_update() -
 
     assert result["created"] is False
     assert result["dry_run"] is True
-    assert result["would_update_account_payload"] == {"HighWorkSubjects": "מיכליות, סלי הרמה"}
+    assert result["would_update_account_payload"] == {"HighWorkSubjects": "סלי הרמה, מקום מוקף (כולל מיכליות)"}
     assert service.posts == []
     assert service.puts == []
 
@@ -516,9 +524,34 @@ def test_work_at_height_update_is_rolled_back_when_enrollment_creation_fails() -
     else:
         raise AssertionError("Expected enrollment creation to fail")
 
-    assert service.puts[0][2] == {"HighWorkSubjects": "מיכליות, סלי הרמה"}
+    assert service.puts[0][2] == {"HighWorkSubjects": "סלי הרמה, מקום מוקף (כולל מיכליות)"}
     assert service.objects[("Accounts", "account1")]["HighWorkSubjects"] == "מיכליות"
     assert service.puts[-1][2] == {"HighWorkSubjects": "מיכליות"}
+
+
+def test_work_at_height_registration_blocks_more_than_four_topics_per_day() -> None:
+    service = FakeMyBusinessService(
+        {
+            ("Accounts", "account1"): {"objectId": "account1", "Name": "Test Customer", "Delete": False},
+            ("Courses", "height1"): open_work_at_height_course(),
+            ("Sales", "sale1"): {"objectId": "sale1", "AccountId": {"objectId": "account1"}},
+        }
+    )
+
+    result = run_async(
+        service.register_customer_to_course(
+            account_id="account1",
+            course_id="height1",
+            sale_id="sale1",
+            payment_status="PAID",
+            dry_run=True,
+            high_work_subjects="סולמות, גגות, קונסטרוקציה, פיגומים נייחים, בימות הרמה",
+        )
+    )
+
+    assert result["eligibility"]["blocking_reasons"] == ["TOO_MANY_HIGH_WORK_SUBJECTS"]
+    assert result["maximum_high_work_subjects_per_day"] == 4
+    assert len(result["selected_high_work_subjects"]) == 5
 
 
 def test_forklift_practical_assignment_uses_course_end_date_for_empty_second_slot() -> None:

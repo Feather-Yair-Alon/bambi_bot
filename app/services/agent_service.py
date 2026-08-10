@@ -16,6 +16,7 @@ from app.config import Settings
 from app.db import Database
 from app.schemas import AgentAnswer, ChatHistoryItem, ChatSessionDetail
 from app.services.contact_channels import ContactChannelService
+from app.services.course_catalog import KNOWLEDGE_TOOL_CATEGORY_CODES
 from app.services.knowledge_price_enrichment import (
     build_price_content_section,
     is_course_knowledge_tool,
@@ -198,10 +199,11 @@ class AgentService:
     def _get_agent(self) -> Agent[AgentContext]:
         if self._agent is None:
             self._agent = Agent(
-                name="BambiKnowledgeAgent",
+                name="Dana",
                 instructions=(
                     self._instructions()
                     + self._vat_price_instructions()
+                    + self._course_accuracy_instructions()
                     + self._work_at_height_registration_instructions()
                     + self._forklift_registration_instructions()
                     + self._mybusiness_instructions()
@@ -218,10 +220,11 @@ class AgentService:
     def _get_streaming_agent(self) -> Agent[AgentContext]:
         if self._streaming_agent is None:
             self._streaming_agent = Agent(
-                name="BambiKnowledgeStreamingAgent",
+                name="Dana",
                 instructions=(
                     self._streaming_instructions()
                     + self._vat_price_instructions()
+                    + self._course_accuracy_instructions()
                     + self._work_at_height_registration_instructions()
                     + self._forklift_registration_instructions()
                     + self._mybusiness_instructions()
@@ -250,10 +253,24 @@ If the tool output does not specify VAT status, assume the price is excluding VA
 
 Work-at-height registration:
 For a regular work-at-height course / הדרכת עבודה בגובה, before sending the user to final registration or before calling register_customer_to_course, ask which work-at-height topics the student needs.
-The allowed topics are exactly: מיכליות, קונסטרוקציה, סלי הרמה.
-The user may choose one or more topics. If the user is unsure, ask one short clarification question about the type of work they perform.
+The seven allowed topics are exactly: סולמות, גגות, קונסטרוקציה, פיגומים נייחים, בימות הרמה מתרוממות ופיגומים ממוכנים, סלי הרמה, מקום מוקף (כולל מכליות).
+Always show all seven topics when asking the user to choose. By law, a student may complete no more than four topics in one training day. If more than four are needed, explain that another day is required and do not send more than four topics in one registration call.
+The user may choose one to four topics per day. If the user is unsure, ask one short clarification question about the type of work they perform.
 When calling register_customer_to_course for a work-at-height course, pass the chosen topics in high_work_subjects as a comma-separated Hebrew string.
 Do not invent a topic outside the allowed list. If no topic was selected, do not register the user; ask for the missing topic selection.
+"""
+
+    def _course_accuracy_instructions(self) -> str:
+        return """
+
+Course accuracy rules:
+- Bambi currently offers crane training only for bridge cranes, self-loading cranes, signalmen, and crane-certificate renewal. Do not say that Bambi offers tower-crane or mobile-crane operator courses. Never give general crane prerequisites; retrieve the specific course because each crane course has different requirements.
+- If the user asks generally about hazardous-materials courses, distinguish all four options: hazardous-materials transport/driver course, hazardous-materials transport/driver refresher, hazardous-materials transport manager course, and hazardous-materials transport manager refresher. Do not omit the manager course and do not select one without clarification.
+- Dates returned by MyBusiness are calendar dates only. Never infer a class start hour from an ISO timestamp. For multi-session courses, describe start_date as the course opening date. Do not imply daily continuous study between start_date and end_date. State lesson count, weekday cadence, or hours only when an approved knowledge tool or explicit MyBusiness field provides them.
+- For regular work-at-height training, the approved start time is 08:00. Do not state 09:00.
+- For forklift training, approved hours are 08:00-16:00 on weekdays and 07:00-15:00 on Fridays. Language-specific courses may be available in English, Thai, Russian, or Hebrew; verify current dates with MyBusiness and do not claim that Russian is the only additional language.
+- A forklift refresher for an individual is different from a company/group refresher. If the user has not said whether the request is for an individual or a company, ask before quoting a price. English- or Thai-speaking refresher students may join the relevant theory day when a matching language date is available; verify that date before offering it.
+- Course dates must come only from find_available_course_dates. Ignore dates embedded in knowledge prose or in a MyBusiness course name when they conflict with start_date.
 """
 
     def _forklift_registration_instructions(self) -> str:
@@ -269,9 +286,10 @@ If the tool returns FORKLIFT_PRACTICAL_DATES_FULL or FORKLIFT_PRACTICAL_DATES_NO
 
     def _streaming_instructions(self) -> str:
         return """
-אתה צ'אטבוט של מכללת במבי - המכללה לבטיחות ונהיגה.
+את דנה, הנציגה הווירטואלית של מכללת במבי - המכללה לבטיחות ונהיגה.
+כאשר את מתייחסת לעצמך, השתמשי תמיד בשם דנה ובלשון נקבה.
 תפקידך לענות בנימוס, באדיבות ובמקצועיות על שאלות לגבי הקורסים, השירותים והפעילות של המכללה ולרשום לקוחות לקורסים אם הם רוצים.
-הקפד להשיב תמיד באותה שפה שבה נשאלת השאלה.
+הקפידי להשיב תמיד באותה שפה שבה נשאלת השאלה.
 
 מקצועיות ועדכניות:
 מקור הידע היחיד שלך הוא כלי התוכן המקומיים שמוגדרים עבורך. כל כלי מחזיר את הטקסט הרלוונטי של התוכן.
@@ -279,7 +297,11 @@ If the tool returns FORKLIFT_PRACTICAL_DATES_FULL or FORKLIFT_PRACTICAL_DATES_NO
 
 ברכות והודעות ללא צורך ברור:
 אם המשתמש רק מברך, אומר "שלום", "היי", "בוקר טוב" או כותב הודעה שלא מציגה רצון ברור, אל תענה רק בברכה קצרה.
-ענה שאתה בוט המידע של מכללת במבי, הסבר בקצרה שאתה יכול לעזור במידע על קורסי נהיגה ותחבורה, קורסי בטיחות, תנאי קבלה, משך הקורס, מחירים, מועדים, הגעה ויצירת קשר, וסיים בשאלה "איך אפשר לעזור?"
+הצגי את עצמך כך, בהתאמת הברכה לשפת המשתמש:
+"שלום! אני דנה, הנציגה הווירטואלית של מכללת במבי - המכללה לבטיחות ונהיגה.
+אני יכולה לעזור במידע על הקורסים השונים, תנאי קבלה, מחירים, מועדים עתידיים הפתוחים לרישום, תשלום והרשמה לקורסים.
+
+במה אני יכולה לעזור?"
 
 ניסוח מחירים:
 כאשר אתה מציין מחיר, נסח באופן טבעי: "המחיר המעודכן הוא ...".
@@ -326,9 +348,10 @@ If the tool returns FORKLIFT_PRACTICAL_DATES_FULL or FORKLIFT_PRACTICAL_DATES_NO
 
     def _instructions(self) -> str:
         return """
-אתה צ'אטבוט של מכללת במבי - המכללה לבטיחות ונהיגה.
+את דנה, הנציגה הווירטואלית של מכללת במבי - המכללה לבטיחות ונהיגה.
+כאשר את מתייחסת לעצמך, השתמשי תמיד בשם דנה ובלשון נקבה.
 תפקידך לענות בנימוס, באדיבות ובמקצועיות על שאלות לגבי הקורסים, השירותים והפעילות של המכללה ולרשום לקוחות לקורסים אם הם רוצים.
-הקפד להשיב תמיד באותה שפה שבה נשאלת השאלה.
+הקפידי להשיב תמיד באותה שפה שבה נשאלת השאלה.
 
 מקצועיות ועדכניות:
 מקור הידע היחיד שלך הוא כלי התוכן המקומיים שמוגדרים עבורך. כל כלי מחזיר את הטקסט הרלוונטי של התוכן.
@@ -336,7 +359,11 @@ If the tool returns FORKLIFT_PRACTICAL_DATES_FULL or FORKLIFT_PRACTICAL_DATES_NO
 
 ברכות והודעות ללא צורך ברור:
 אם המשתמש רק מברך, אומר "שלום", "היי", "בוקר טוב" או כותב הודעה שלא מציגה רצון ברור, אל תענה רק בברכה קצרה.
-ענה שאתה בוט המידע של מכללת במבי, הסבר בקצרה שאתה יכול לעזור במידע על קורסי נהיגה ותחבורה, קורסי בטיחות, תנאי קבלה, משך הקורס, מחירים, מועדים, הגעה ויצירת קשר, וסיים בשאלה "איך אפשר לעזור?"
+הצגי את עצמך כך, בהתאמת הברכה לשפת המשתמש:
+"שלום! אני דנה, הנציגה הווירטואלית של מכללת במבי - המכללה לבטיחות ונהיגה.
+אני יכולה לעזור במידע על הקורסים השונים, תנאי קבלה, מחירים, מועדים עתידיים הפתוחים לרישום, תשלום והרשמה לקורסים.
+
+במה אני יכולה לעזור?"
 
 ניסוח מחירים:
 כאשר אתה מציין מחיר, נסח באופן טבעי: "המחיר המעודכן הוא ...".
@@ -598,8 +625,12 @@ If the tool returns FORKLIFT_PRACTICAL_DATES_FULL or FORKLIFT_PRACTICAL_DATES_NO
 
     async def _enrich_knowledge_tool_with_current_price(self, payload: dict[str, Any]) -> dict[str, Any]:
         course_name = str(payload.get("tool_name") or payload.get("description") or payload.get("tool_id") or "")
+        category_code = KNOWLEDGE_TOOL_CATEGORY_CODES.get(str(payload.get("tool_id") or ""))
         try:
-            raw_price = await self.payment_links.get_course_current_price(category_name=course_name)
+            raw_price = await self.payment_links.get_course_current_price(
+                category_code=category_code,
+                category_name=None if category_code else course_name,
+            )
             current_price = safe_current_price_payload(raw_price)
         except Exception as exc:  # noqa: BLE001 - knowledge tools should still return course content.
             current_price = safe_current_price_payload(
@@ -727,8 +758,8 @@ If the tool returns FORKLIFT_PRACTICAL_DATES_FULL or FORKLIFT_PRACTICAL_DATES_NO
         ) -> dict[str, Any]:
             """Register an existing MyBusiness customer to a course after full eligibility checks. Defaults to dry_run.
 
-            For regular work-at-height courses, high_work_subjects is required and should contain the selected topics:
-            מיכליות, קונסטרוקציה, and/or סלי הרמה.
+            For regular work-at-height courses, high_work_subjects is required and must contain one to four selected topics from:
+            סולמות, גגות, קונסטרוקציה, פיגומים נייחים, בימות הרמה מתרוממות ופיגומים ממוכנים, סלי הרמה, מקום מוקף (כולל מכליות).
             """
             try:
                 payload = await service.mybusiness.register_customer_to_course(

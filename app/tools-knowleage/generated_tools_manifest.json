@@ -449,6 +449,16 @@
       ]
     },
     {
+      "tool_id": "course_hazmat_transport_manager",
+      "display_name": "קורס אחראי שינוע חומ\"ס",
+      "description": "יש להשתמש בכלי זה רק עבור קורס ההכשרה הראשוני לאחראי שינוע חומ\"ס. אין להשתמש בו עבור ריענון אחראי שינוע או עבור קורס/ריענון הובלת חומ\"ס לנהגים.",
+      "file_name": "generated/course_hazmat_transport_manager.txt",
+      "source_count": 1,
+      "source_files": [
+        "manual/hazmat_transport_manager"
+      ]
+    },
+    {
       "tool_id": "course_foreign_workers_driving",
       "display_name": "קורסי נהיגה לעובדים זרים",
       "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורסי נהיגה לעובדים זרים במכללת במבי, כולל הליך הוצאת מספר ישראלי, טופס ירוק, דרישות ויזה, שפות, בחינות, שוברים.",
@@ -538,7 +548,7 @@
     {
       "tool_id": "course_crane_license",
       "display_name": "קורס רישיון לעגורן",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל באופן כללי איך מקבלים רישיון לעגורן בישראל או על קורס עגורן במכללת במבי, כולל סוגי רישיונות, תנאי קבלה כלליים, תכני לימוד, מבחנים והסמכה.",
+      "description": "יש להשתמש בכלי זה לשאלה כללית על הכשרות עגורן במכללת במבי. הכלי מציג רק את ההכשרות שמתקיימות כיום ומחייב מעבר לכלי הקורס הספציפי לפני מסירת תנאים.",
       "file_name": "generated/course_crane_license.txt",
       "source_count": 2,
       "source_files": [
@@ -549,7 +559,7 @@
     {
       "tool_id": "course_crane_license_general",
       "display_name": "רישיון למנוף",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל באופן כללי על רישיון למנוף או היתר למנוף במכללת במבי, כולל תנאי קבלה כלליים, מתכונת, מבחנים, נושאי לימוד והסמכה.",
+      "description": "כלי הבהרה לשאלה כללית על מנוף או עגורן. אין להסיק ממנו תנאי קבלה כלליים ואין להציע עגורן צריח או עגורן נייד שאינם מתקיימים כיום במכללה.",
       "file_name": "generated/course_crane_license_general.txt",
       "source_count": 3,
       "source_files": [

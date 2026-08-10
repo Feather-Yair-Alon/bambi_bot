@@ -10,6 +10,12 @@ from typing import Any
 import httpx
 
 from app.config import Settings
+from app.services.course_catalog import (
+    detect_course_language,
+    normalize_catalog_text,
+    resolve_course_category_code,
+    text_matches_language,
+)
 
 
 ACCOUNT_MATCH_FIELDS = ("PhoneNumber", "StudentPhone", "Phone2", "Phone3", "StudentId", "IdClient", "CompanyId")
@@ -25,10 +31,15 @@ FORKLIFT_CATEGORY_CODE = "80001"
 FORKLIFT_CATEGORY_NAME = "\u05de\u05dc\u05d2\u05d6\u05d4"
 FORKLIFT_PRACTICAL_CAPACITY = 16
 WORK_AT_HEIGHT_SUBJECTS = {
-    "tankers": "\u05de\u05d9\u05db\u05dc\u05d9\u05d5\u05ea",
+    "ladders": "\u05e1\u05d5\u05dc\u05de\u05d5\u05ea",
+    "roofs": "\u05d2\u05d2\u05d5\u05ea",
     "constructions": "\u05e7\u05d5\u05e0\u05e1\u05d8\u05e8\u05d5\u05e7\u05e6\u05d9\u05d4",
+    "scaffolds": "\u05e4\u05d9\u05d2\u05d5\u05de\u05d9\u05dd \u05e0\u05d9\u05d9\u05d7\u05d9\u05dd",
+    "platforms": "\u05d1\u05d9\u05de\u05d5\u05ea \u05d4\u05e8\u05de\u05d4 \u05de\u05ea\u05e8\u05d5\u05de\u05de\u05d5\u05ea \u05d5\u05e4\u05d9\u05d2\u05d5\u05de\u05d9\u05dd \u05de\u05de\u05d5\u05db\u05e0\u05d9\u05dd",
     "basket": "\u05e1\u05dc\u05d9 \u05d4\u05e8\u05de\u05d4",
+    "confined_space": "\u05de\u05e7\u05d5\u05dd \u05de\u05d5\u05e7\u05e3 (\u05db\u05d5\u05dc\u05dc \u05de\u05d9\u05db\u05dc\u05d9\u05d5\u05ea)",
 }
+MAX_WORK_AT_HEIGHT_SUBJECTS_PER_DAY = 4
 MIN_COURSE_KEYWORD_LENGTH = 3
 COURSE_SEARCH_STOPWORDS = {
     "course",
@@ -226,6 +237,18 @@ class MyBusinessService:
         if not self.is_configured:
             return {"found": False, "available_courses_count": 0, "courses": [], "message": "MyBusiness API is not configured."}
 
+        language = detect_course_language(category_name)
+        normalized_request = normalize_catalog_text(category_name)
+        forklift_refresher_language_day = bool(
+            language
+            and language != "עברית"
+            and "מלגזה" in normalized_request
+            and "רענון" in normalized_request
+        )
+        if forklift_refresher_language_day and not category_id:
+            category_code = FORKLIFT_CATEGORY_CODE
+            category_name = None
+
         category_result = await self._resolve_category(category_id, category_code, category_name)
         if category_result.get("ambiguous") or not category_result.get("category"):
             if category_name and not category_result.get("ambiguous"):
@@ -263,11 +286,17 @@ class MyBusinessService:
                 ),
             },
         )
+        if language and language != "עברית":
+            rows = [row for row in rows if text_matches_language(row.get("Name"), language)]
 
         courses = []
         for row in rows:
             course = map_available_course(row, category)
             if course is not None:
+                if forklift_refresher_language_day:
+                    course["attendance_option"] = "forklift_refresher_theory_day"
+                    course["language"] = language
+                    course["attendance_note"] = "This date is offered for joining the matching-language theory day as a forklift refresher."
                 courses.append(course)
 
         return {
@@ -276,6 +305,7 @@ class MyBusinessService:
             "category": category,
             "available_courses_count": len(courses),
             "raw_matching_courses_before_capacity_filter": len(rows),
+            "forklift_refresher_language_day": forklift_refresher_language_day,
             "courses": courses,
         }
 
@@ -304,7 +334,10 @@ class MyBusinessService:
             },
         )
 
+        language = detect_course_language(course_name)
         matched_rows = [row for row in rows if course_row_matches_search(row, course_name)]
+        if language:
+            matched_rows = [row for row in matched_rows if text_matches_language(row.get("Name"), language)]
         courses = []
         for row in matched_rows:
             category = map_category(row.get("ProductCategory") or {}) if isinstance(row.get("ProductCategory"), dict) else None
@@ -479,6 +512,17 @@ class MyBusinessService:
                     "created": False,
                     "dry_run": dry_run,
                     "eligibility": eligibility,
+                    "required_high_work_subjects": list(WORK_AT_HEIGHT_SUBJECTS.values()),
+                }
+            selected_subjects = [item.strip() for item in normalized_high_work_subjects.split(",") if item.strip()]
+            if len(selected_subjects) > MAX_WORK_AT_HEIGHT_SUBJECTS_PER_DAY:
+                eligibility = {**eligibility, "can_register": False, "blocking_reasons": ["TOO_MANY_HIGH_WORK_SUBJECTS"]}
+                return {
+                    "created": False,
+                    "dry_run": dry_run,
+                    "eligibility": eligibility,
+                    "maximum_high_work_subjects_per_day": MAX_WORK_AT_HEIGHT_SUBJECTS_PER_DAY,
+                    "selected_high_work_subjects": selected_subjects,
                     "required_high_work_subjects": list(WORK_AT_HEIGHT_SUBJECTS.values()),
                 }
             account = await self.get_account(account_id)
@@ -782,7 +826,10 @@ class MyBusinessService:
             normalized_code = normalize_text(category_code)
             matches = [category for category in categories if normalize_text(category["code"]) == normalized_code]
         elif category_name:
-            matches = match_categories(categories, category_name)
+            alias_code = resolve_course_category_code(category_name)
+            matches = [category for category in categories if normalize_text(category["code"]) == alias_code] if alias_code else []
+            if not matches:
+                matches = match_categories(categories, category_name)
         else:
             return {"found": False, "message": "Missing category_id, category_code, or category_name."}
 
@@ -870,19 +917,38 @@ def normalize_high_work_subjects(value: str | list[str] | None) -> str | None:
 
     selected: list[str] = []
     subject_aliases = {
-        WORK_AT_HEIGHT_SUBJECTS["tankers"]: ("tank", "\u05de\u05d9\u05db\u05dc", "\u05de\u05db\u05dc", "\u05de\u05d9\u05db\u05dc\u05d9\u05d5\u05ea", "\u05de\u05db\u05dc\u05d9\u05d5\u05ea"),
+        WORK_AT_HEIGHT_SUBJECTS["ladders"]: ("ladder", "\u05e1\u05d5\u05dc\u05dd", "\u05e1\u05d5\u05dc\u05de\u05d5\u05ea"),
+        WORK_AT_HEIGHT_SUBJECTS["roofs"]: ("roof", "\u05d2\u05d2", "\u05d2\u05d2\u05d5\u05ea"),
         WORK_AT_HEIGHT_SUBJECTS["constructions"]: (
             "construction",
             "\u05e7\u05d5\u05e0\u05e1\u05d8\u05e8\u05d5\u05e7\u05e6",
             "\u05e7\u05d5\u05e0\u05e1\u05d8\u05e8\u05d5\u05e7\u05e6\u05d9\u05d4",
             "\u05e7\u05d5\u05e0\u05e1\u05d8\u05e8\u05d5\u05e7\u05e6\u05d9\u05d5\u05ea",
         ),
+        WORK_AT_HEIGHT_SUBJECTS["scaffolds"]: ("stationary scaffold", "\u05e4\u05d9\u05d2\u05d5\u05dd \u05e0\u05d9\u05d9\u05d7", "\u05e4\u05d9\u05d2\u05d5\u05de\u05d9\u05dd \u05e0\u05d9\u05d9\u05d7\u05d9\u05dd"),
+        WORK_AT_HEIGHT_SUBJECTS["platforms"]: (
+            "platform",
+            "\u05d1\u05de\u05d4",
+            "\u05d1\u05de\u05d5\u05ea",
+            "\u05d1\u05d9\u05de\u05d5\u05ea",
+            "\u05e4\u05d9\u05d2\u05d5\u05dd \u05de\u05de\u05d5\u05db\u05df",
+            "\u05e4\u05d9\u05d2\u05d5\u05de\u05d9\u05dd \u05de\u05de\u05d5\u05db\u05e0\u05d9\u05dd",
+        ),
         WORK_AT_HEIGHT_SUBJECTS["basket"]: (
             "basket",
             "\u05e1\u05dc\u05d9",
             "\u05e1\u05dc",
-            "\u05d4\u05e8\u05de\u05d4",
             "\u05e1\u05dc\u05d9 \u05d4\u05e8\u05de\u05d4",
+        ),
+        WORK_AT_HEIGHT_SUBJECTS["confined_space"]: (
+            "confined",
+            "tank",
+            "\u05de\u05e7\u05d5\u05dd \u05de\u05d5\u05e7\u05e3",
+            "\u05d7\u05dc\u05dc \u05de\u05d5\u05e7\u05e3",
+            "\u05de\u05d9\u05db\u05dc",
+            "\u05de\u05db\u05dc",
+            "\u05de\u05d9\u05db\u05dc\u05d9\u05d5\u05ea",
+            "\u05de\u05db\u05dc\u05d9\u05d5\u05ea",
         ),
     }
     for canonical, aliases in subject_aliases.items():
@@ -1080,9 +1146,12 @@ def map_available_course(row: dict[str, Any], category: dict[str, Any]) -> dict[
     return {
         "course_id": row.get("objectId"),
         "course_name": clean(row.get("Name")),
-        "start_date": parse_date(row.get("StartDate")),
-        "end_date": parse_date(row.get("EndDate")),
-        "first_class": parse_date(row.get("FirstClass")),
+        # MyBusiness stores calendar dates with a placeholder hour. Never expose
+        # that timestamp as the actual class time.
+        "start_date": calendar_date_key(row.get("StartDate")),
+        "end_date": calendar_date_key(row.get("EndDate")),
+        "first_class": calendar_date_key(row.get("FirstClass")),
+        "schedule_note": "These are calendar dates only; no class hours are supplied by MyBusiness.",
         "available_seats": available_seats,
         "max_capacity": max_capacity,
         "registered_students": registered_students,

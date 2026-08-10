@@ -1,3 +1,6 @@
+import asyncio
+
+from app.config import Settings
 from app.services.mybusiness import (
     EXTERNAL_COURSE_NO_ID,
     EXTERNAL_COURSE_YES_ID,
@@ -12,6 +15,7 @@ from app.services.mybusiness import (
     pointer,
     validate_course_for_registration,
     with_internal_courses_only_filter,
+    MyBusinessService,
 )
 
 
@@ -146,8 +150,55 @@ def test_map_available_course_returns_positive_capacity() -> None:
     assert course["available_seats"] == 3
     assert course["category_id"] == "cat1"
     assert course["status"] == "פתוח לרישום"
+    assert course["start_date"] == "2026-06-19"
+    assert course["schedule_note"] == "These are calendar dates only; no class hours are supplied by MyBusiness."
     assert course["product_price"] is None
     assert "get_course_current_price" in course["price_note"]
+
+
+class LanguageDatesService(MyBusinessService):
+    def __init__(self) -> None:
+        super().__init__(Settings(MYBUSINESS_APP_ID="app", MYBUSINESS_MASTER_KEY="key"))
+
+    async def list_course_categories(self, search: str | None = None) -> dict:
+        return {
+            "categories_count": 1,
+            "categories": [{"category_id": "forklift", "name": "מלגזה", "code": "80001"}],
+        }
+
+    async def _get_open_statuses(self) -> list[dict]:
+        return [{"status_id": "open", "name": "פתוח", "is_open": True}]
+
+    async def _get_class(self, table_name: str, params: dict) -> list[dict]:
+        assert table_name == "Courses"
+        common = {
+            "StartDate": {"__type": "Date", "iso": "2999-08-20T09:00:00.000Z"},
+            "EndDate": {"__type": "Date", "iso": "2999-08-21T09:00:00.000Z"},
+            "MaxCapacity": 30,
+            "RegisteredStudents": 1,
+            "StatusId": {"objectId": "open", "Name": "פתוח"},
+            "ProductCategory": {"objectId": "forklift", "Name": "מלגזה", "Code": "80001"},
+        }
+        return [
+            {**common, "objectId": "english", "Name": "קורס מלגזה בשפה האנגלית"},
+            {**common, "objectId": "thai", "Name": "קורס מלגזה לתאילנדים"},
+            {**common, "objectId": "russian", "Name": "קורס מלגזה בשפה הרוסית"},
+        ]
+
+
+def test_category_date_lookup_filters_requested_language() -> None:
+    result = asyncio.run(LanguageDatesService().find_available_course_dates(category_name="מלגזה באנגלית"))
+
+    assert result["available_courses_count"] == 1
+    assert result["courses"][0]["course_id"] == "english"
+
+
+def test_forklift_refresher_language_uses_matching_theory_day() -> None:
+    result = asyncio.run(LanguageDatesService().find_available_course_dates(category_name="רענון מלגזה בתאית"))
+
+    assert result["available_courses_count"] == 1
+    assert result["courses"][0]["course_id"] == "thai"
+    assert result["courses"][0]["attendance_option"] == "forklift_refresher_theory_day"
 
 
 def test_validate_course_for_registration_blocks_external_course() -> None:

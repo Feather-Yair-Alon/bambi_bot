@@ -15,7 +15,7 @@ class ContactChannel:
 
 CONTACT_CHANNELS = [
     ContactChannel(
-        owner="טלי",
+        owner="נציג/ת ימי עיון וקורסי מדריכים",
         phone="052-702-3884",
         family="ימי עיון קצב\"ט וממונה, אבטחת מטענים וקורסי מדריכים",
         keywords=(
@@ -32,7 +32,7 @@ CONTACT_CHANNELS = [
         ),
     ),
     ContactChannel(
-        owner="חן",
+        owner="נציג/ת עבודה בגובה ועגורנים",
         phone="054-904-7872",
         family="עבודה בגובה ועגורנים",
         keywords=(
@@ -49,7 +49,7 @@ CONTACT_CHANNELS = [
         ),
     ),
     ContactChannel(
-        owner="ירין",
+        owner="נציג/ת נהיגה ורכב כבד",
         phone="054-904-7652",
         family="טרקטור, מכונה ניידת ומשא כבד",
         keywords=(
@@ -64,7 +64,7 @@ CONTACT_CHANNELS = [
         ),
     ),
     ContactChannel(
-        owner="מרינה",
+        owner="נציג/ת חומ\"ס ורכב ציבורי",
         phone="054-580-6131",
         family="הובלת חומ\"ס, רישיון מוביל, מדריכי מלגזות ורכב ציבורי",
         keywords=(
@@ -87,7 +87,7 @@ CONTACT_CHANNELS = [
         ),
     ),
     ContactChannel(
-        owner="מרינה",
+        owner="נציג/ת מלגזות",
         phone="054-968-8028",
         family="מלגזות ורענוני מלגזה",
         keywords=(
@@ -102,7 +102,7 @@ CONTACT_CHANNELS = [
 
 OFFICE_CONTACT = {
     "owner": "משרד",
-    "phone": "074-70-87-030",
+    "phone": "08-859-2779",
     "family": "פרטי משרד כלליים",
 }
 

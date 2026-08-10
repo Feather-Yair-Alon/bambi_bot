@@ -18,6 +18,16 @@ from app.security import (
 from app.services.agent_service import AgentService
 
 
+def test_agent_identity_and_greeting_are_consistent_across_response_modes() -> None:
+    service = AgentService.__new__(AgentService)
+
+    for instructions in (service._instructions(), service._streaming_instructions()):
+        assert "את דנה, הנציגה הווירטואלית" in instructions
+        assert "אני דנה, הנציגה הווירטואלית" in instructions
+        assert "מועדים עתידיים הפתוחים לרישום" in instructions
+        assert "במה אני יכולה לעזור?" in instructions
+
+
 def test_redact_sensitive_text_removes_registration_details() -> None:
     text = "054-123-4567, 312496730, student@example.com"
 

@@ -74,7 +74,7 @@ async def home() -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bambi Knowledge Agent</title>
+  <title>דנה - הנציגה הווירטואלית של מכללת במבי</title>
   <style>
     :root { --panel: #fffaf0; --ink: #182126; --accent: #c34f2f; --muted: #6e6b66; --line: #dcc9a8; }
     body { margin: 0; font-family: "Segoe UI", sans-serif; background: linear-gradient(135deg, #f6f0e7, #ead9c2); color: var(--ink); }
@@ -102,8 +102,8 @@ async def home() -> str:
 <body>
   <div class="wrap">
     <div class="hero">
-      <h1>סביבת בדיקה מקומית לבוט הידע של במבי</h1>
-      <p>הבוט עונה רק מתוך כלי הידע המקומיים בפרויקט. אם אין מידע מספיק, הוא יבקש הבהרה או יסמן צורך בבדיקה אנושית.</p>
+      <h1>דנה - הנציגה הווירטואלית של מכללת במבי</h1>
+      <p>דנה עונה מתוך כלי הידע המקומיים ויכולה לסייע במידע, תשלום והרשמה לקורסים.</p>
       <div class="chat">
         <div id="messages"></div>
         <textarea id="input" placeholder="שאל/י על קורס, מחיר, דרישות, מועדים או מסמך ידע"></textarea>
