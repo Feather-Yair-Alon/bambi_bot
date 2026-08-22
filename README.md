@@ -36,6 +36,30 @@ To compare against a specific older snapshot instead of the latest sibling expor
 python scripts\export_wordpress_raw.py --previous-dir data\website_raw\20260618T214803Z --sleep 2.5
 ```
 
+## One-time Drive quote rebuild
+
+The approved Drive quote rebuild uses `data/drive_quotes_raw/inventory.json`, downloads the listed DOCX/PDF files, excludes every `ישן` folder, removes dynamic commercial and personal data, and builds an audited candidate before replacing active tools.
+
+Prepare and inspect extraction without calling the LLM:
+
+```powershell
+python scripts\update_knowledge_from_drive_quotes.py --prepare-only
+```
+
+Build a candidate without changing active tools:
+
+```powershell
+python scripts\update_knowledge_from_drive_quotes.py --skip-download
+```
+
+Apply only after the audit passes. A full tool and manifest backup is created automatically:
+
+```powershell
+python scripts\update_knowledge_from_drive_quotes.py --skip-download --apply
+```
+
+Use `--refresh-tool course_example` to invalidate one cached course decision and synthesis. Reports and checkpoints are written under `data/drive_quotes_build/`.
+
 ## Included features
 
 - FastAPI chat API and local test UI

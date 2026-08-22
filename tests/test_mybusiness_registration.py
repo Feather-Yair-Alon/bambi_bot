@@ -556,9 +556,9 @@ def test_work_at_height_registration_blocks_more_than_four_topics_per_day() -> N
 
 def test_forklift_practical_assignment_uses_course_end_date_for_empty_second_slot() -> None:
     course = open_forklift_course()
-    course["StartDate"] = date_pointer("2026-08-17T09:00:00.000Z")
-    course["EndDate"] = date_pointer("2026-08-18T09:00:00.000Z")
-    first_date = "2026-08-17T00:00:00.000Z"
+    course["StartDate"] = date_pointer("2099-08-17T09:00:00.000Z")
+    course["EndDate"] = date_pointer("2099-08-18T09:00:00.000Z")
+    first_date = "2099-08-17T00:00:00.000Z"
     service = FakeMyBusinessService(
         {("Courses", "forklift1"): course},
         {
@@ -571,15 +571,15 @@ def test_forklift_practical_assignment_uses_course_end_date_for_empty_second_slo
 
     result = run_async(service.resolve_forklift_practical_assignment(course))
 
-    assert result["selected_actual_date"] == "2026-08-18T00:00:00.000Z"
+    assert result["selected_actual_date"] == "2099-08-18T00:00:00.000Z"
     assert result["selected"]["registered_students"] == 0
 
 
 def test_concurrent_forklift_registrations_do_not_exceed_practical_capacity() -> None:
     course = open_forklift_course()
-    course["StartDate"] = date_pointer("2026-08-17T09:00:00.000Z")
-    course["EndDate"] = date_pointer("2026-08-18T09:00:00.000Z")
-    first_date = "2026-08-17T00:00:00.000Z"
+    course["StartDate"] = date_pointer("2099-08-17T09:00:00.000Z")
+    course["EndDate"] = date_pointer("2099-08-18T09:00:00.000Z")
+    first_date = "2099-08-17T00:00:00.000Z"
     objects = {
         ("Courses", "forklift1"): course,
         ("Accounts", "account1"): {"objectId": "account1", "Delete": False},
@@ -618,7 +618,7 @@ def test_concurrent_forklift_registrations_do_not_exceed_practical_capacity() ->
     first, second = run_async(register_both())
 
     assert first["forklift_practical_assignment"]["selected_actual_date"] == first_date
-    assert second["forklift_practical_assignment"]["selected_actual_date"] == "2026-08-18T00:00:00.000Z"
+    assert second["forklift_practical_assignment"]["selected_actual_date"] == "2099-08-18T00:00:00.000Z"
 
 
 def test_build_course_enrollment_payload_uses_required_pointers() -> None:

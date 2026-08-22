@@ -6,6 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 COPY app /app/app
+COPY scripts /app/scripts
 COPY tests /app/tests
 COPY pyproject.toml /app/pyproject.toml
 COPY README.md /app/README.md

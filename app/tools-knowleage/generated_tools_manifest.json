@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-07-01T14:41:18.320830+00:00",
+  "generated_at": "2026-08-22T18:12:30.132924+00:00",
   "raw_dir": "data\\website_raw\\20260701T143921Z",
-  "generator": "scripts/build_knowledge_tools.py",
+  "generator": "scripts/update_knowledge_from_drive_quotes.py",
   "tools": [
     {
       "tool_id": "driving_and_transportation_courses",
@@ -95,56 +95,118 @@
     {
       "tool_id": "course_heavy_vehicle",
       "display_name": "קורס משא כבד",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורס משא כבד או רישיון נהיגה למשאית מעל 12 טון / רישיון C במכללת במבי, כולל תנאי קבלה, מתכונת לימוד.",
+      "description": "מידע על קורס משא כבד להוצאת רישיון C למשאית מעל 12 טון: תנאי קבלה, מבנה ההכשרה העיונית והמעשית, חובת נוכחות, בחינות ותעודה.",
       "file_name": "generated/course_heavy_vehicle.txt",
-      "source_count": 15,
+      "source_count": 2,
       "source_files": [
-        "raw/pages/3697-heavy-vehicle.json",
-        "raw/posts/4723-d7-a8-d7-99-d7-a9-d7-99-d7-95-d7-9f--d7-9e-d7-a2-d7-9c-15--d7-98-d7-95-d7-9f--d7-9e-d7-97-d7-99-d7-a8--d7-a2-d7-9c-d7-95.json",
-        "raw/posts/4534-d7-94-d7-aa-d7-9e-d7-95-d7-93-d7-93-d7-95-d7-aa--d7-a2-d7-9d--d7-9e-d7-a9-d7-a8-d7-93--d7-94-d7-a8-d7-99-d7-a9-d7-95-d7-.json",
-        "raw/posts/4538-d7-a9-d7-93-d7-a8-d7-95-d7-92--d7-a8-d7-99-d7-a9-d7-99-d7-95-d7-9f--d7-9c-d7-9e-d7-a9-d7-90-d7-99-d7-aa--d7-9e-d7-a2-d7-.json",
-        "raw/posts/784-d7-a7-d7-95-d7-a8-d7-a1--d7-9e-d7-a9-d7-90--d7-9b-d7-91-d7-93.json",
-        "raw/posts/3360-d7-a2-d7-9e-d7-95-d7-93--d7-a0-d7-97-d7-99-d7-aa-d7-94--d7-a7-d7-95-d7-a8-d7-a1--d7-9e-d7-a9-d7-90--d7-9b-d7-91-d7-93.json",
-        "raw/posts/4006-d7-a9-d7-9c-d7-91-d7-99-d7-9d--d7-9c-d7-a7-d7-91-d7-9c-d7-aa--d7-a8-d7-99-d7-a9-d7-99-d7-95-d7-9f--d7-a0-d7-94-d7-99-d7-.json",
-        "raw/posts/3204-d7-94-d7-9b-d7-a9-d7-a8-d7-94--d7-9c-d7-a0-d7-94-d7-99-d7-92-d7-94--d7-a2-d7-9c--d7-9e-d7-a9-d7-90-d7-99-d7-aa.json",
-        "raw/posts/2843-d7-a8-d7-99-d7-a9-d7-99-d7-95-d7-9f--d7-9e-d7-a9-d7-90-d7-99-d7-aa--d7-9e-d7-a2-d7-9c-15--d7-98-d7-95-d7-9f.json",
-        "raw/posts/2822-d7-a8-d7-99-d7-a9-d7-99-d7-95-d7-9f--d7-9c-d7-9e-d7-a9-d7-90-d7-99-d7-aa--d7-91-d7-93-d7-a8-d7-95-d7-9d.json",
-        "raw/posts/2423-d7-9b-d7-9e-d7-94--d7-a2-d7-95-d7-9c-d7-94--d7-a8-d7-99-d7-a9-d7-99-d7-95-d7-9f--d7-9c-d7-9e-d7-a9-d7-90-d7-99-d7-aa.json",
-        "raw/posts/2100-d7-a8-d7-99-d7-a9-d7-99-d7-95-d7-9f--d7-a0-d7-94-d7-99-d7-92-d7-94--d7-9e-d7-a2-d7-9c-12--d7-98-d7-95-d7-9f.json",
-        "raw/posts/2095-d7-a7-d7-95-d7-a8-d7-a1--d7-9e-d7-a9-d7-90--d7-9b-d7-91-d7-93-2.json",
-        "raw/posts/2090-d7-a8-d7-99-d7-a9-d7-99-d7-95-d7-9f--d7-9c-d7-9e-d7-a9-d7-90-d7-99-d7-aa-c.json",
-        "raw/posts/2085-d7-a7-d7-95-d7-a8-d7-a1--d7-9e-d7-a9-d7-a8-d7-93--d7-94-d7-aa-d7-a2-d7-a1-d7-95-d7-a7-d7-94--d7-a8-d7-99-d7-a9-d7-99-d7-.json"
+        "drive:1cBKL1K2dGdjLPxGy7k0_nP3IAaUA3-T9",
+        "drive:1x3cQnDY12mozpq4k6L10Ws4UsWer9tg-"
+      ],
+      "aliases": [
+        "משא כבד",
+        "משאית מעל 12 טון",
+        "קורס משא כבד",
+        "קורס נהיגה למשא כבד",
+        "רישיון C",
+        "רישיון למשאית מעל 12 טון",
+        "רישיון נהיגה למשא כבד"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1cBKL1K2dGdjLPxGy7k0_nP3IAaUA3-T9",
+          "title": "הצעת מחיר משא כבד.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-17T07:36:46.000Z",
+          "url": "https://docs.google.com/document/d/1cBKL1K2dGdjLPxGy7k0_nP3IAaUA3-T9/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        },
+        {
+          "file_id": "1x3cQnDY12mozpq4k6L10Ws4UsWer9tg-",
+          "title": "הצעת מחיר משא כבד-1.pdf",
+          "folder_path": "",
+          "modified_time": "2026-06-16T06:20:03.000Z",
+          "url": "https://drive.google.com/file/d/1x3cQnDY12mozpq4k6L10Ws4UsWer9tg-/view?usp=drivesdk"
+        }
       ]
     },
     {
       "tool_id": "course_forklift_instructor_refresher",
       "display_name": "רענון מדריך מלגזה",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על רענון מדריך מלגזה במכללת במבי, כולל מתכונת, תנאי קבלה, תנאי הסמכה, נושאי לימוד.",
+      "description": "מידע לסוכן שירות על השתלמות רענון למדריכי נהיגה למלגזות: מתכונת, מיקום, תנאי קבלה, דרישות הסמכה, ציוד ולבוש ותעודה. יש להשתמש בכלי כאשר הלקוח מתעניין ברענון למדריכי מלגזה קיימים, ולא בקורס מדריכי מלגזה ראשוני או בקורס מפעיל מלגזה.",
       "file_name": "generated/course_forklift_instructor_refresher.txt",
       "source_count": 1,
       "source_files": [
-        "raw/posts/4868-d7-a8-d7-a2-d7-a0-d7-95-d7-9f--d7-9e-d7-93-d7-a8-d7-99-d7-9a--d7-9e-d7-9c-d7-92-d7-96-d7-94.json"
+        "drive:1F4jI8r0X0_MttVoyUD6Kj1dBwBG7q4TR"
+      ],
+      "aliases": [
+        "השתלמות ריענון למדריכי מלגזה",
+        "ריענון מדריכי מלגזה",
+        "ריענון מדריכי נהיגה למלגזות",
+        "רענון מדריך נהיגה למלגזה",
+        "רענון מדריכי מלגזה"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1F4jI8r0X0_MttVoyUD6Kj1dBwBG7q4TR",
+          "title": "הצעת מחיר לריענון מדריכי מלגזה.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-17T07:33:30.000Z",
+          "url": "https://docs.google.com/document/d/1F4jI8r0X0_MttVoyUD6Kj1dBwBG7q4TR/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        }
       ]
     },
     {
       "tool_id": "course_forklift_instructor",
       "display_name": "קורס מדריך מלגזה",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורס מדריך מלגזה במכללת במבי, כולל נושאי לימוד, אפשרויות תעסוקה, דרישות קבלה, הפניה ממשרד הרישוי, ועדת קבלה, משך הקורס ומבחני הסמכה.",
+      "description": "מידע על קורס מדריכי מלגזה במכללת במבי: מטרת ההכשרה, תנאי קבלה, מתכונת ומשך, מיקום, מבחנים, הסמכה ורישום היתר הדרכת מלגזה. להשתמש כאשר הלקוח שואל על הכשרת מדריך מלגזה או קורס מדריכי מלגזה, ולא על קורס מפעיל מלגזה רגיל או רענון מפעילים.",
       "file_name": "generated/course_forklift_instructor.txt",
-      "source_count": 2,
+      "source_count": 1,
       "source_files": [
-        "raw/posts/766-d7-a7-d7-95-d7-a8-d7-a1--d7-9e-d7-93-d7-a8-d7-99-d7-9a--d7-9e-d7-9c-d7-92-d7-96-d7-94.json",
-        "raw/posts/1387-d7-a9-d7-90-d7-9c-d7-95-d7-aa--d7-a0-d7-a4-d7-95-d7-a6-d7-95-d7-aa--d7-a7-d7-95-d7-a8-d7-a1--d7-9e-d7-93-d7-a8-d7-99-d7-.json"
+        "drive:1E5tR7YjIcnEM3sDpzqvc7rEBcYNe4UtK"
+      ],
+      "aliases": [
+        "הכשרת מדריכי מלגזה",
+        "מדריך מלגזה",
+        "קורס מדריך למלגזה",
+        "קורס מדריכי מלגזה"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1E5tR7YjIcnEM3sDpzqvc7rEBcYNe4UtK",
+          "title": "הצעת מחיר קורס מדריך מלגזה מכללת במבי 2025.docx",
+          "folder_path": "בטיחות",
+          "modified_time": "2026-07-01T10:11:26.000Z",
+          "url": "https://docs.google.com/document/d/1E5tR7YjIcnEM3sDpzqvc7rEBcYNe4UtK/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        }
       ]
     },
     {
       "tool_id": "course_crane_certificate_renewal",
       "display_name": "חידוש תעודת עגורן",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על חידוש תעודת עגורן/עגורנאי או אתת במכללת במבי, כולל דרישות לפי משך פקיעת הרישיון, זמני טיפול ופרטי קשר.",
+      "description": "יש להשתמש בכלי זה כאשר לקוח מבקש מידע על חידוש רישיון או תעודת עגורן, כולל עגורן גשר ועגורן העמסה עצמית: תנאים, מסמכים נדרשים, תוקף תעודה וזמני הנפקה. אין להשתמש בו עבור קורס עגורן ראשוני או הכשרות אחרות.",
       "file_name": "generated/course_crane_certificate_renewal.txt",
       "source_count": 1,
       "source_files": [
-        "raw/posts/758-d7-97-d7-99-d7-93-d7-95-d7-a9--d7-aa-d7-a2-d7-95-d7-93-d7-aa--d7-a2-d7-92-d7-95-d7-a8-d7-9f.json"
+        "drive:1XomguxVMsXeRg5XXYFl2S2iW6-NBFPO7"
+      ],
+      "aliases": [
+        "חידוש עגורנאי",
+        "חידוש רישיון עגורן",
+        "חידוש רישיון עגורן גשר",
+        "חידוש רישיון עגורן העמסה עצמית",
+        "חידוש תעודת עגורן"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1XomguxVMsXeRg5XXYFl2S2iW6-NBFPO7",
+          "title": "הצעת מחיר לחידוש רישיון עגורן גשר והעמסה עצמית 2026.pdf",
+          "folder_path": "עגורן",
+          "modified_time": "2026-07-16T08:18:59.000Z",
+          "url": "https://drive.google.com/file/d/1XomguxVMsXeRg5XXYFl2S2iW6-NBFPO7/view?usp=drivesdk"
+        }
       ]
     },
     {
@@ -160,95 +222,294 @@
     {
       "tool_id": "course_workplace_safety_training",
       "display_name": "הדרכות בטיחות",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על הדרכת בטיחות כללית לעובדים בעבודה, תדירות ההדרכה, התאמה למקום העבודה, מי מעביר אותה, אישור/תעודה בסיום ונושאים שנכללים בהדרכה.",
+      "description": "יש להשתמש בכלי זה למענה על שאלות לגבי הדרכת בטיחות כללית לעובדים בארגון, כולל קהל יעד, משך, מיקום ההדרכה, ציוד נדרש באתר הלקוח, נושאי לימוד, אישורי השתתפות ומדיניות שינוי מועד.",
       "file_name": "generated/course_workplace_safety_training.txt",
-      "source_count": 4,
+      "source_count": 1,
       "source_files": [
-        "raw/posts/744-d7-94-d7-93-d7-a8-d7-9b-d7-aa--d7-91-d7-98-d7-99-d7-97-d7-95-d7-aa--d7-9b-d7-9c-d7-9c-d7-99-d7-aa--d7-91-d7-a2-d7-91-d7-.json",
-        "raw/posts/2824-d7-94-d7-93-d7-a8-d7-9b-d7-aa--d7-91-d7-98-d7-99-d7-97-d7-95-d7-aa--d7-9c-d7-a2-d7-95-d7-91-d7-93-d7-99-d7-9d.json",
-        "raw/posts/1362-d7-a9-d7-90-d7-9c-d7-95-d7-aa--d7-a0-d7-a4-d7-95-d7-a6-d7-95-d7-aa--d7-91-d7-98-d7-99-d7-97-d7-95-d7-aa--d7-9b-d7-9c-d7-.json",
-        "raw/posts/2397-d7-94-d7-95-d7-a8-d7-90-d7-95-d7-aa--d7-91-d7-98-d7-99-d7-97-d7-95-d7-aa--d7-91-d7-a2-d7-91-d7-95-d7-93-d7-94.json"
+        "drive:19hKG9SWOSFvh-ls8NIlaCV2HvlXM8QUD"
+      ],
+      "aliases": [
+        "הדרכות בטיחות כלליות",
+        "הדרכת בטיחות באתר הלקוח",
+        "הדרכת בטיחות בבית הלקוח",
+        "הדרכת בטיחות כללית",
+        "הדרכת בטיחות לעובדים"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "19hKG9SWOSFvh-ls8NIlaCV2HvlXM8QUD",
+          "title": "הצעת מחיר להדרכת בטיחות כללית בבית הלקוח 2026.docx",
+          "folder_path": "בטיחות",
+          "modified_time": "2026-05-27T09:11:02.000Z",
+          "url": "https://docs.google.com/document/d/19hKG9SWOSFvh-ls8NIlaCV2HvlXM8QUD/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        }
       ]
     },
     {
       "tool_id": "course_annual_forklift_refresher",
       "display_name": "רענון שנתי למלגזה",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על רענון שנתי למלגזה במכללת במבי, כולל חובת הרענון, תדירות, אחריות המעסיק, מתכונת, נושאים, מבחן בקיאות ואפשרות לרענון מעשי.",
+      "description": "יש להשתמש בכלי זה עבור שאלות על רענון שנתי למלגזה לנהגים בעלי היתר נהיגה במלגזה: מטרת ההדרכה, מתכונת, משך, דרישות השתתפות ומסמכים, נושאי לימוד, אפשרויות מיקום או הדרכה מקוונת ואישור סיום. אין להשתמש בו עבור קורס מלגזה ראשוני או הכשרת נהגי מלגזה חדשים.",
       "file_name": "generated/course_annual_forklift_refresher.txt",
       "source_count": 2,
       "source_files": [
-        "raw/posts/797-d7-a8-d7-a2-d7-a0-d7-95-d7-9f--d7-a9-d7-a0-d7-aa-d7-99--d7-9c-d7-9e-d7-9c-d7-92-d7-96-d7-94.json",
-        "raw/posts/1201-d7-a8-d7-99-d7-a2-d7-a0-d7-95-d7-9f--d7-9e-d7-9c-d7-92-d7-96-d7-94--d7-9e-d7-94--d7-96-d7-94--d7-9c-d7-9e-d7-94--d7-96-d.json"
+        "drive:1rP9rN-ngclvhRuaRWhZ1VbLlEOubxye8",
+        "drive:1DK6wT1SrEoA-X-_M3ZTYbDWc0BGLVh3V"
+      ],
+      "aliases": [
+        "הדרכת רענון למלגזנים",
+        "ריענון מלגזה",
+        "ריענון שנתי למלגזה",
+        "רענון מלגזה",
+        "רענון שנתי למלגזה",
+        "רענון שנתי מלגזה"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1rP9rN-ngclvhRuaRWhZ1VbLlEOubxye8",
+          "title": "הצעת מחיר לריענון מלגזה בחברה.pdf",
+          "folder_path": "",
+          "modified_time": "2026-08-17T07:33:54.000Z",
+          "url": "https://drive.google.com/file/d/1rP9rN-ngclvhRuaRWhZ1VbLlEOubxye8/view?usp=drivesdk"
+        },
+        {
+          "file_id": "1DK6wT1SrEoA-X-_M3ZTYbDWc0BGLVh3V",
+          "title": "הצעת מחיר לריענון מלגזה למס' עובדים.pdf",
+          "folder_path": "",
+          "modified_time": "2026-08-17T07:35:26.000Z",
+          "url": "https://drive.google.com/file/d/1DK6wT1SrEoA-X-_M3ZTYbDWc0BGLVh3V/view?usp=drivesdk"
+        }
       ]
     },
     {
       "tool_id": "course_signalman",
       "display_name": "קורס אתתים",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורס אתתים במכללת במבי, כולל תנאי קבלה והסמכה, משך, מתכונת, מיקום, שפת לימוד, חידוש הסמכה, נושאי לימוד.",
+      "description": "מידע על קורס מתן איתות / אתתים: נושאי לימוד, משך ומתכונת, תנאי קבלה ומסמכים, מבחנים ותעודה, והבדלים בין קורס במכללה לקורס בבית הלקוח.",
       "file_name": "generated/course_signalman.txt",
-      "source_count": 1,
+      "source_count": 2,
       "source_files": [
-        "raw/posts/2912-d7-a7-d7-95-d7-a8-d7-a1--d7-90-d7-aa-d7-aa-d7-99-d7-9d.json"
+        "drive:1J7M793306UL3gxiTeSC-e46aa5dhImKK",
+        "drive:1bMGjJl3pjNiNr3GPasQwKSyWqg76Wr09"
+      ],
+      "aliases": [
+        "איתות למפעילי עגורנים",
+        "אתת",
+        "אתת מוסמך",
+        "הסמכת אתתים",
+        "קורס אתתים",
+        "קורס מתן איתות"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1J7M793306UL3gxiTeSC-e46aa5dhImKK",
+          "title": "הצעת מחיר קורס מתן איתות במכללה 2026.pdf",
+          "folder_path": "עגורן",
+          "modified_time": "2026-07-06T12:31:15.000Z",
+          "url": "https://drive.google.com/file/d/1J7M793306UL3gxiTeSC-e46aa5dhImKK/view?usp=drivesdk"
+        },
+        {
+          "file_id": "1bMGjJl3pjNiNr3GPasQwKSyWqg76Wr09",
+          "title": "הצעת מחיר קורס מתן איתות בבית הלקוח 2026.pdf",
+          "folder_path": "עגורן",
+          "modified_time": "2026-07-06T12:27:49.000Z",
+          "url": "https://drive.google.com/file/d/1bMGjJl3pjNiNr3GPasQwKSyWqg76Wr09/view?usp=drivesdk"
+        }
       ]
     },
     {
       "tool_id": "course_bridge_crane",
       "display_name": "קורס עגורן גשר",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורס עגורן גשר במכללת במבי, כולל מתכונת, תנאי קבלה, תעודה, מיקום, שפת לימוד, נושאי לימוד, אפשרות לקבוצות.",
+      "description": "מידע על קורס עגורן גשר/הסמכת עגורנאי גשר: נושאי לימוד, משך ומתכונת, תנאי קבלה והסמכה, מבחנים, תעודה, אפשרות ביצוע באתר או מפעל ומדיניות שינויים לוגיסטיים.",
       "file_name": "generated/course_bridge_crane.txt",
-      "source_count": 1,
+      "source_count": 2,
       "source_files": [
-        "raw/posts/4308-d7-a7-d7-95-d7-a8-d7-a1--d7-a2-d7-92-d7-95-d7-a8-d7-9f--d7-92-d7-a9-d7-a8.json"
+        "drive:1Q8aef-j56uFDfeuQB_CXoeuUPz8EsPQ5",
+        "drive:1cNYqvxBp0iJkZqU5sS0l5IuQgO41RlCX"
+      ],
+      "aliases": [
+        "הסמכת עגורן גשר",
+        "הסמכת עגורנאי גשר",
+        "עגורן גשר",
+        "עגורנאי גשר",
+        "קורס עגורן גשר"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1Q8aef-j56uFDfeuQB_CXoeuUPz8EsPQ5",
+          "title": "הצעת מחיר עגורן גשר 2026.pdf",
+          "folder_path": "",
+          "modified_time": "2026-08-06T12:49:55.000Z",
+          "url": "https://drive.google.com/file/d/1Q8aef-j56uFDfeuQB_CXoeuUPz8EsPQ5/view?usp=drivesdk"
+        },
+        {
+          "file_id": "1cNYqvxBp0iJkZqU5sS0l5IuQgO41RlCX",
+          "title": "הצעת מחיר עגורן גשר בודדים 2026.pdf",
+          "folder_path": "עגורן",
+          "modified_time": "2026-08-16T11:43:28.000Z",
+          "url": "https://drive.google.com/file/d/1cNYqvxBp0iJkZqU5sS0l5IuQgO41RlCX/view?usp=drivesdk"
+        }
       ]
     },
     {
       "tool_id": "course_forklift",
       "display_name": "קורס מלגזה",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורס מלגזה/רישיון למלגזה במכללת במבי, כולל מלגזה טלסקופית, תנאי קבלה בסיסיים, מה כוללת ההכשרה, טופס ירוק, הוצאת הרישיון וסיוע ראשוני במציאת עבודה כמלגזן.",
+      "description": "מידע על קורס מלגזה במכללת במבי: הוצאת היתר/רישיון מלגזה, תנאי קבלה, שפות לימוד, מבנה הקורס, מבחנים, ציוד נדרש ומדיניות דחייה עקב אילוצים. מתאים לפניות על קורס ראשוני למלגזה, כולל מסלולים בשפות עברית, רוסית, אנגלית, ספרדית או קבוצות עובדים זרים.",
       "file_name": "generated/course_forklift.txt",
-      "source_count": 7,
+      "source_count": 9,
       "source_files": [
-        "raw/posts/780-d7-a7-d7-95-d7-a8-d7-a1--d7-9e-d7-9c-d7-92-d7-96-d7-94.json",
-        "raw/posts/818-d7-a8-d7-99-d7-a9-d7-99-d7-95-d7-9f--d7-9c-d7-9e-d7-9c-d7-92-d7-96-d7-94--d7-a7-d7-95-d7-a8-d7-a1--d7-9c-d7-99-d7-9e-d7-.json",
-        "raw/posts/4004-d7-90-d7-99-d7-9a--d7-9e-d7-aa-d7-91-d7-a6-d7-a2--d7-97-d7-99-d7-93-d7-95-d7-a9--d7-a8-d7-99-d7-a9-d7-99-d7-95-d7-9f--d7.json",
-        "raw/posts/1372-d7-a9-d7-90-d7-9c-d7-95-d7-aa--d7-a0-d7-a4-d7-95-d7-a6-d7-95-d7-aa--d7-a7-d7-95-d7-a8-d7-a1--d7-a8-d7-99-d7-a9-d7-99-d7-.json",
-        "raw/posts/2833-d7-9e-d7-9c-d7-92-d7-96-d7-94--d7-98-d7-9c-d7-a1-d7-a7-d7-95-d7-a4-d7-99-d7-aa.json",
-        "raw/posts/2381-d7-a8-d7-99-d7-a9-d7-95-d7-99--d7-9e-d7-9c-d7-92-d7-96-d7-94.json",
-        "raw/posts/1262-d7-9e-d7-97-d7-a4-d7-a9--d7-a2-d7-91-d7-95-d7-93-d7-94--d7-91-d7-aa-d7-95-d7-a8--d7-9e-d7-9c-d7-92-d7-96-d7-9f--d7-9c-d7.json"
+        "drive:1la_7Bxgk5HxAhW817HA6e-3AY8qcRbAK",
+        "drive:1J8XiNE4ybvOt5y94R-u9RBEEeyYm4CNv",
+        "drive:1Ep5zCz9O3NHeCXjFKXfMOxbSdcuqS1o8",
+        "drive:1T9ycSEPyK89Kkw5c7QKFtFBwCsq4W0N8",
+        "drive:1aAlwtlaaTWieka3kJSxZFnbFSMSYESKy",
+        "drive:1DQyY9jCIoIelHH3cVG_7L6ieNfEv2mgy",
+        "drive:1hkj0aSYom4rwXPXUjp3ucJT0Z4YYtjNR",
+        "drive:103V4Hlhk00RirCoDCB1cGpoDHiyz8MFb",
+        "drive:1jYM8142T2L42E-5BDvRCJCmAI0UTSb3C"
+      ],
+      "aliases": [
+        "הוצאת היתר למלגזה",
+        "הוצאת היתר מלגזה",
+        "היתר מלגזה",
+        "היתר נהיגה במלגזה",
+        "לימודי מלגזה",
+        "נהיגה במלגזה",
+        "נהיגה על מלגזה",
+        "קורס מלגזה",
+        "קורס מלגזה באנגלית",
+        "קורס מלגזה בספרדית",
+        "קורס מלגזה ברוסית",
+        "קורס מלגזה בשפה האנגלית",
+        "קורס מלגזה בשפה הרוסית",
+        "קורס מלגזה בשפה ספרדית",
+        "קורס מלגזה לעובדים זרים",
+        "קורס מלגזה לתאילנדים",
+        "קורס נהג מלגזה",
+        "רישיון מלגזה"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1la_7Bxgk5HxAhW817HA6e-3AY8qcRbAK",
+          "title": "לשכת תעסוקה הצעת מחיר קורס מלגזה.docx",
+          "folder_path": "",
+          "modified_time": "2026-04-15T08:54:32.000Z",
+          "url": "https://docs.google.com/document/d/1la_7Bxgk5HxAhW817HA6e-3AY8qcRbAK/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        },
+        {
+          "file_id": "1J8XiNE4ybvOt5y94R-u9RBEEeyYm4CNv",
+          "title": "הצעת מחיר קורס מלגזה 2026.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-17T07:37:51.000Z",
+          "url": "https://docs.google.com/document/d/1J8XiNE4ybvOt5y94R-u9RBEEeyYm4CNv/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        },
+        {
+          "file_id": "1Ep5zCz9O3NHeCXjFKXfMOxbSdcuqS1o8",
+          "title": "הצעת מחיר קורס מלגזה בשפה האנגלית.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-06T12:13:00.000Z",
+          "url": "https://docs.google.com/document/d/1Ep5zCz9O3NHeCXjFKXfMOxbSdcuqS1o8/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        },
+        {
+          "file_id": "1T9ycSEPyK89Kkw5c7QKFtFBwCsq4W0N8",
+          "title": "הצעת מחיר קורס מלגזה בשפה הספרדית.docx",
+          "folder_path": "",
+          "modified_time": "2026-06-17T11:43:16.000Z",
+          "url": "https://docs.google.com/document/d/1T9ycSEPyK89Kkw5c7QKFtFBwCsq4W0N8/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        },
+        {
+          "file_id": "1aAlwtlaaTWieka3kJSxZFnbFSMSYESKy",
+          "title": "הצעת מחיר קורס מלגזה בשפה הרוסית.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-17T07:38:21.000Z",
+          "url": "https://docs.google.com/document/d/1aAlwtlaaTWieka3kJSxZFnbFSMSYESKy/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        },
+        {
+          "file_id": "1DQyY9jCIoIelHH3cVG_7L6ieNfEv2mgy",
+          "title": "הצעת מחיר קורס מלגזה חדש.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-06T12:10:41.000Z",
+          "url": "https://docs.google.com/document/d/1DQyY9jCIoIelHH3cVG_7L6ieNfEv2mgy/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        },
+        {
+          "file_id": "1hkj0aSYom4rwXPXUjp3ucJT0Z4YYtjNR",
+          "title": "הצעת מחיר קורס מלגזה לתאילנדים.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-17T07:39:04.000Z",
+          "url": "https://docs.google.com/document/d/1hkj0aSYom4rwXPXUjp3ucJT0Z4YYtjNR/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        },
+        {
+          "file_id": "103V4Hlhk00RirCoDCB1cGpoDHiyz8MFb",
+          "title": "הצעת מחיר קורס מלגזה שופרסל.pdf",
+          "folder_path": "",
+          "modified_time": "2026-05-06T11:23:56.000Z",
+          "url": "https://drive.google.com/file/d/103V4Hlhk00RirCoDCB1cGpoDHiyz8MFb/view?usp=drivesdk"
+        },
+        {
+          "file_id": "1jYM8142T2L42E-5BDvRCJCmAI0UTSb3C",
+          "title": "הצעת מחיר קורס מלגזה תנובה.docx",
+          "folder_path": "",
+          "modified_time": "2026-06-22T09:41:01.000Z",
+          "url": "https://docs.google.com/document/d/1jYM8142T2L42E-5BDvRCJCmAI0UTSb3C/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        }
       ]
     },
     {
       "tool_id": "course_work_at_height",
       "display_name": "קורס עבודה בגובה",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורס עבודה בגובה, הדרכת עבודות בגובה, הדרכות בטיחות לעבודה בגובה, אישור/רענון עבודה בגובה, או ציוד מגן אישי לעבודה בגובה.",
+      "description": "מידע סטטי מאושר על קורס עבודה בגובה, כולל תנאי קבלה, מבנה, משך, תכנים, מבחנים ותעודה.",
       "file_name": "generated/course_work_at_height.txt",
-      "source_count": 10,
+      "source_count": 1,
       "source_files": [
-        "raw/posts/753-d7-a7-d7-95-d7-a8-d7-a1--d7-a2-d7-91-d7-95-d7-93-d7-94--d7-91-d7-92-d7-95-d7-91-d7-94.json",
-        "raw/posts/4724-d7-a7-d7-95-d7-a8-d7-a1--d7-92-d7-95-d7-91-d7-94--d7-94-d7-a1-d7-9e-d7-9b-d7-94--d7-9c-d7-a2-d7-91-d7-95-d7-93-d7-94--d7.json",
-        "raw/posts/3103-d7-94-d7-a1-d7-9e-d7-9b-d7-aa--d7-a2-d7-91-d7-95-d7-93-d7-94--d7-91-d7-92-d7-95-d7-91-d7-94.json",
-        "raw/posts/3105-d7-a2-d7-91-d7-95-d7-93-d7-94--d7-91-d7-92-d7-95-d7-91-d7-94-2--d7-9e-d7-98-d7-a8.json",
-        "raw/posts/2841-d7-a8-d7-99-d7-a9-d7-99-d7-95-d7-9f--d7-9c-d7-a2-d7-91-d7-95-d7-93-d7-94--d7-91-d7-92-d7-95-d7-91-d7-94.json",
-        "raw/posts/1382-d7-a9-d7-90-d7-9c-d7-95-d7-aa--d7-a0-d7-a4-d7-95-d7-a6-d7-95-d7-aa--d7-a6-d7-99-d7-95-d7-93--d7-9e-d7-92-d7-9f--d7-90-d7.json",
-        "raw/posts/2344-d7-94-d7-93-d7-a8-d7-9b-d7-aa--d7-a2-d7-91-d7-95-d7-93-d7-95-d7-aa--d7-91-d7-92-d7-95-d7-91-d7-94.json",
-        "raw/posts/1217-d7-91-d7-98-d7-99-d7-97-d7-95-d7-aa--d7-91-d7-a2-d7-91-d7-95-d7-93-d7-94--d7-91-d7-92-d7-95-d7-91-d7-94--d7-a1-d7-9b-d7-.json",
-        "raw/posts/1284-d7-a9-d7-99-d7-a7-d7-95-d7-9c-d7-99-d7-9d--d7-91-d7-91-d7-97-d7-99-d7-a8-d7-aa--d7-a6-d7-99-d7-95-d7-93--d7-9c-d7-a2-d7-.json",
-        "raw/posts/1190-d7-a6-d7-99-d7-95-d7-93--d7-91-d7-98-d7-99-d7-97-d7-95-d7-aa--d7-9c-d7-a2-d7-91-d7-95-d7-93-d7-94--d7-91-d7-92-d7-95-d7-.json"
+        "drive:13VihWiTftXqq-Qx__mWaAENRr4nYzD4n"
+      ],
+      "aliases": [
+        "אישור עבודה בגובה",
+        "הדרכת עבודה בגובה",
+        "הסמכת עבודה בגובה",
+        "עבודות בגובה",
+        "רענון עבודה בגובה"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "13VihWiTftXqq-Qx__mWaAENRr4nYzD4n",
+          "title": "הצעת מחיר גובה 2026.pdf",
+          "folder_path": "",
+          "modified_time": "2026-08-13T09:12:18.000Z",
+          "url": "https://drive.google.com/file/d/13VihWiTftXqq-Qx__mWaAENRr4nYzD4n/view?usp=drivesdk"
+        }
       ]
     },
     {
       "tool_id": "course_mobile_machine",
       "display_name": "קורס מכונה ניידת",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורס מכונה ניידת, רישיון/היתר להפעלת כלי צמ״ה כגון שופל, באגר, בובקט, מחפרון, קומביין או מטאטא כביש, תנאי השתתפות, פטורים, טופס ירוק ומה כולל הקורס.",
+      "description": "יש להשתמש בכלי זה למענה על שאלות בנושא קורס מכונה ניידת: תנאי קבלה, מבנה הקורס, חלק עיוני ומעשי, דרישות טופס ירוק/רש״ל 18, מבחנים, קבלת היתר, ציוד נדרש והנחיות כלליות לקורס.",
       "file_name": "generated/course_mobile_machine.txt",
-      "source_count": 6,
+      "source_count": 1,
       "source_files": [
-        "raw/posts/776-d7-a7-d7-95-d7-a8-d7-a1--d7-9e-d7-9b-d7-95-d7-a0-d7-94--d7-a0-d7-99-d7-99-d7-93-d7-aa.json",
-        "raw/posts/4730-d7-a8-d7-99-d7-a9-d7-99-d7-95-d7-9f--d7-9e-d7-9b-d7-95-d7-a0-d7-94--d7-a0-d7-99-d7-99-d7-93-d7-aa--d7-9e-d7-a9-d7-a8-d7-.json",
-        "raw/posts/4542-d7-98-d7-a8-d7-a7-d7-98-d7-95-d7-a8--d7-90-d7-95--d7-a9-d7-95-d7-a4-d7-9c--d7-9b-d7-9a--d7-aa-d7-91-d7-97-d7-a8-d7-95--d.json",
-        "raw/posts/4541-d7-94-d7-99-d7-aa-d7-a8--d7-9c-d7-9e-d7-9b-d7-95-d7-a0-d7-94--d7-a0-d7-99-d7-99-d7-93-d7-aa--d7-9e-d7-95-d7-9c--d7-a8-d7.json",
-        "raw/posts/4543-d7-94-d7-9e-d7-93-d7-a8-d7-99-d7-9a--d7-94-d7-a9-d7-9c-d7-9d--d7-9c-d7-a8-d7-99-d7-a9-d7-99-d7-95-d7-9f--d7-9b-d7-9c-d7-.json",
-        "raw/posts/1377-d7-a9-d7-90-d7-9c-d7-95-d7-aa--d7-a0-d7-a4-d7-95-d7-a6-d7-95-d7-aa--d7-a7-d7-95-d7-a8-d7-a1--d7-a8-d7-99-d7-a9-d7-99-d7-.json"
+        "drive:1AjjSWvg-i_RwjaVNSeQESDecQJKcDSAY"
+      ],
+      "aliases": [
+        "היתר מכונה ניידת",
+        "הפעלת מכונה ניידת",
+        "כלי צמ״ה",
+        "מכונה ניידת",
+        "קורס מכונה ניידת",
+        "רישיון מכונה ניידת"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1AjjSWvg-i_RwjaVNSeQESDecQJKcDSAY",
+          "title": "הצעת מחיר קורס מכונה ניידת.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-17T07:37:18.000Z",
+          "url": "https://docs.google.com/document/d/1AjjSWvg-i_RwjaVNSeQESDecQJKcDSAY/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        }
       ]
     },
     {
@@ -265,11 +526,42 @@
     {
       "tool_id": "course_hazardous_materials_transport",
       "display_name": "קורס הובלת חומ\"ס",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורס הובלת חומרים מסוכנים / הובלת חומ\"ס במכללת במבי, כולל מתכונת, תעודה, תוקף, רענון, מיקום, דרישות כלליות לחברה.",
+      "description": "מידע לסוכן על קורס הובלת חומרים מסוכנים (חומ\"ס): קהל יעד, תנאי קבלה, תהליך מקדים מול משרד התחבורה, מתכונת לימוד, נושאי לימוד, תעודה, תוקף, ריענון ומדיניות ביטולים. להשתמש כשנשאלים על הכשרת נהגים להיתר הובלת חומ\"ס.",
       "file_name": "generated/course_hazardous_materials_transport.txt",
-      "source_count": 1,
+      "source_count": 2,
       "source_files": [
-        "raw/posts/2791-d7-a7-d7-95-d7-a8-d7-a1--d7-94-d7-95-d7-91-d7-9c-d7-aa--d7-97-d7-95-d7-9e-d7-a1.json"
+        "drive:1Jvclhwn33sxw4H-2Ccq2cJe1GSlrgRJ8",
+        "drive:1iBrBWAzZJ7wyjV4uZwqZMSufN9Peqq6e"
+      ],
+      "aliases": [
+        "הובלת חומרים מסוכנים",
+        "היתר הובלת חומ\"ס",
+        "נהג חומ\"ס",
+        "קורס הובלת חומ\"ס",
+        "קורס הובלת חומס",
+        "קורס הובלת חומרים מסוכנים",
+        "קורס חומ\"ס",
+        "קורס חומ\"ס וחומרי נפץ",
+        "קורס חומס",
+        "קורס חומס וחומרי נפץ",
+        "קורס חומרים מסוכנים"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1Jvclhwn33sxw4H-2Ccq2cJe1GSlrgRJ8",
+          "title": "קורס חומס-הצעת מחיר.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-17T07:42:05.000Z",
+          "url": "https://docs.google.com/document/d/1Jvclhwn33sxw4H-2Ccq2cJe1GSlrgRJ8/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        },
+        {
+          "file_id": "1iBrBWAzZJ7wyjV4uZwqZMSufN9Peqq6e",
+          "title": "קורס חומס+חומרי נפץ-הצעת מחיר.docx",
+          "folder_path": "",
+          "modified_time": "2025-10-20T10:25:26.000Z",
+          "url": "https://docs.google.com/document/d/1iBrBWAzZJ7wyjV4uZwqZMSufN9Peqq6e/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        }
       ]
     },
     {
@@ -285,23 +577,53 @@
     {
       "tool_id": "course_self_loading_crane",
       "display_name": "קורס עגורן העמסה עצמית",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורס עגורן העמסה עצמית במכללת במבי, כולל תנאי קבלה, משך ומתכונת, מבחנים, חידוש רישיון/תעודה, רענון שנתי ואפשרות לקורס בחברה.",
+      "description": "מידע על קורס עגורן העמסה עצמית במכללת במבי: נושאי לימוד, מתכונת ומשך, תנאי קבלה, מסמכים נדרשים, מבחנים ותנאים לקבלת תעודה. מתאים לשאלות על הכשרת מפעילי עגורן/מנוף העמסה עצמית, כולל מסלול ראשוני בלבד.",
       "file_name": "generated/course_self_loading_crane.txt",
-      "source_count": 3,
+      "source_count": 1,
       "source_files": [
-        "raw/posts/801-d7-a7-d7-95-d7-a8-d7-a1--d7-a2-d7-92-d7-95-d7-a8-d7-9f--d7-94-d7-a2-d7-9e-d7-a1-d7-94--d7-a2-d7-a6-d7-9e-d7-99-d7-aa.json",
-        "raw/posts/3357-d7-a2-d7-9e-d7-95-d7-93--d7-a0-d7-97-d7-99-d7-aa-d7-94--d7-a7-d7-95-d7-a8-d7-a1--d7-a2-d7-92-d7-95-d7-a8-d7-9f--d7-94-d7.json",
-        "raw/posts/1406-d7-a9-d7-90-d7-9c-d7-95-d7-aa--d7-a0-d7-a4-d7-95-d7-a6-d7-95-d7-aa--d7-a2-d7-92-d7-95-d7-a8-d7-9f--d7-94-d7-a2-d7-9e-d7-.json"
+        "drive:1dPzDi7H73IFAkj5a--KjT42APCrrmoqF"
+      ],
+      "aliases": [
+        "מנוף העמסה עצמית",
+        "עגורן העמסה עצמית",
+        "קורס מנוף העמסה עצמית",
+        "קורס עגורן העמסה עצמית"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1dPzDi7H73IFAkj5a--KjT42APCrrmoqF",
+          "title": "הצעת מחיר עגורן העמסה עצמית 2026.pdf",
+          "folder_path": "עגורן",
+          "modified_time": "2026-07-14T06:54:47.000Z",
+          "url": "https://drive.google.com/file/d/1dPzDi7H73IFAkj5a--KjT42APCrrmoqF/view?usp=drivesdk"
+        }
       ]
     },
     {
       "tool_id": "course_transport_operator_license",
       "display_name": "רישיון מוביל",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורס רישיון מוביל / מוביל קצר במכללת במבי, כולל תנאי סף, בחינות גמר, תעודת גמר, תפקיד מנהל מקצועי במשרד שירותי הובלה, נושאי לימוד, שוברים.",
+      "description": "כלי ידע לסוכן שירות עבור שאלות על קורס רישיון מוביל קצר: מטרת הקורס, קהל יעד, תנאי סף, מתכונת ומשך, מיקום, דרישות זכאות ותעודה. יש להשתמש בו כאשר הפנייה עוסקת ברישיון מוביל עד 5 כלי רכב, מנהל מקצועי במשרד שירותי הובלה או דרישות משרד התחבורה בתחום ההובלה.",
       "file_name": "generated/course_transport_operator_license.txt",
       "source_count": 1,
       "source_files": [
-        "raw/posts/2790-d7-a8-d7-99-d7-a9-d7-99-d7-95-d7-9f--d7-9e-d7-95-d7-91-d7-99-d7-9c.json"
+        "drive:1dz4kAEq2QQ-JkgwupjBHdQhD7sz48maa"
+      ],
+      "aliases": [
+        "מוביל קצר",
+        "מנהל מקצועי במשרד שירותי הובלה",
+        "קורס רישיון מוביל קצר",
+        "רישיון מוביל עד 5 כלי רכב"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1dz4kAEq2QQ-JkgwupjBHdQhD7sz48maa",
+          "title": "הצעת מחיר-רישיון מוביל קצר.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-17T07:40:06.000Z",
+          "url": "https://docs.google.com/document/d/1dz4kAEq2QQ-JkgwupjBHdQhD7sz48maa/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        }
       ]
     },
     {
@@ -342,13 +664,37 @@
     {
       "tool_id": "course_safety_trustees",
       "display_name": "קורס נאמני בטיחות",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורס נאמני בטיחות במכללת במבי, כולל חובת ועדת בטיחות, למי הקורס מיועד, מתכונת, נוכחות, מבחן, תעודה, נושאי לימוד וריענון.",
+      "description": "מידע על קורס נאמני בטיחות: מטרת ההכשרה, קהל יעד, מבנה ומשך, נושאי לימוד, תנאי סיום ותעודה והשלמת מפגשים.",
       "file_name": "generated/course_safety_trustees.txt",
-      "source_count": 3,
+      "source_count": 2,
       "source_files": [
-        "raw/posts/4530-d7-a7-d7-95-d7-a8-d7-a1--d7-a0-d7-90-d7-9e-d7-a0-d7-99--d7-91-d7-98-d7-99-d7-97-d7-95-d7-aa--d7-94-d7-a1-d7-9e-d7-9b-d7-.json",
-        "raw/posts/788-d7-a7-d7-95-d7-a8-d7-a1--d7-a0-d7-90-d7-9e-d7-a0-d7-99--d7-91-d7-98-d7-99-d7-97-d7-95-d7-aa--d7-91-d7-a1-d7-99-d7-a1-d7-.json",
-        "raw/posts/1356-d7-a9-d7-90-d7-9c-d7-95-d7-aa--d7-a0-d7-a4-d7-95-d7-a6-d7-95-d7-aa--d7-a7-d7-95-d7-a8-d7-a1--d7-a0-d7-90-d7-9e-d7-a0-d7-.json"
+        "drive:1o8_fQGDcctcq7PIJrDYAUuyCN3Ihhbv7",
+        "drive:1-lUI6IlTE69vntmI5n7fC6sUBQhNp3CD"
+      ],
+      "aliases": [
+        "הכשרת נאמני בטיחות",
+        "ועדת בטיחות מפעלית",
+        "חברי ועדת בטיחות",
+        "נאמן בטיחות בעבודה",
+        "נאמני בטיחות",
+        "קורס נאמן בטיחות"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1o8_fQGDcctcq7PIJrDYAUuyCN3Ihhbv7",
+          "title": "הצעת מחיר נאמני בטיחות במכללה.docx",
+          "folder_path": "בטיחות",
+          "modified_time": "2026-07-14T06:07:16.000Z",
+          "url": "https://docs.google.com/document/d/1o8_fQGDcctcq7PIJrDYAUuyCN3Ihhbv7/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        },
+        {
+          "file_id": "1-lUI6IlTE69vntmI5n7fC6sUBQhNp3CD",
+          "title": "הצעת מחיר נאמני בטיחות קבוצה.docx",
+          "folder_path": "בטיחות",
+          "modified_time": "2026-07-15T10:54:34.000Z",
+          "url": "https://docs.google.com/document/d/1-lUI6IlTE69vntmI5n7fC6sUBQhNp3CD/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        }
       ]
     },
     {
@@ -367,25 +713,54 @@
     {
       "tool_id": "course_work_at_height_instructor_refresher",
       "display_name": "ריענון מדריכים לעבודה בגובה",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על ריענון מדריכי עבודה בגובה במכללת במבי, כולל הצורך בריענון לאחר שנתיים לריענון קרוב.",
+      "description": "יש להשתמש בכלי זה למענה על שאלות לגבי השתלמות ריענון למדריכי עבודה בגובה: מטרת הריענון, תנאי סף, מתכונת ומשך, דרישות הסמכה, מבחן חוזר, ציוד נדרש, מיקום ומדיניות דחייה עקב אילוצים. אין להשתמש בו עבור קורס עבודה בגובה לעובדים, קורס מדריכים ראשוני או מסלולי הכשרה אחרים.",
       "file_name": "generated/course_work_at_height_instructor_refresher.txt",
-      "source_count": 2,
+      "source_count": 1,
       "source_files": [
-        "raw/posts/813-d7-a8-d7-99-d7-a2-d7-a0-d7-95-d7-9f--d7-9e-d7-93-d7-a8-d7-99-d7-9b-d7-99-d7-9d--d7-9c-d7-a2-d7-91-d7-95-d7-93-d7-94--d7-.json",
-        "raw/posts/1025-d7-97-d7-93-d7-a9--d7-91-d7-91-d7-9e-d7-91-d7-99--d7-a8-d7-99-d7-a2-d7-a0-d7-95-d7-9f--d7-9e-d7-93-d7-a8-d7-99-d7-9b-d7-.json"
+        "drive:15e5HYKkwLZtFPxB87EEsHrCpp2YpFqBh"
+      ],
+      "aliases": [
+        "השתלמות ריענון למדריך עבודה בגובה",
+        "ריענון מדריך עבודה בגובה",
+        "ריענון מדריכי עבודה בגובה",
+        "ריענון עבודה בגובה למדריכים",
+        "רענון מדריכים לעבודה בגובה"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "15e5HYKkwLZtFPxB87EEsHrCpp2YpFqBh",
+          "title": "הצעת מחיר + הזמנת עבודה לריענון מדריכי עבודה בגובה 2026.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-13T09:17:21.000Z",
+          "url": "https://docs.google.com/document/d/15e5HYKkwLZtFPxB87EEsHrCpp2YpFqBh/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        }
       ]
     },
     {
       "tool_id": "course_work_at_height_instructor",
       "display_name": "קורס מדריך עבודה בגובה",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורס מדריך עבודה בגובה במכללת במבי, כולל אוכלוסיית יעד, משך ההכשרה, נושאי ההכשרה, תעודה, והיכן מדריך מוסמך רשאי להעביר קורסים.",
+      "description": "כלי מידע לקורס מדריכי עבודה בגובה: מטרות הקורס, קהל יעד, תנאי סף, דרישות הסמכה, מבחנים, ציוד נדרש, מיקום ודחיית חלק מהקורס. יש להשתמש בו לשאלות על הכשרת מדריך עבודה בגובה בלבד, ולא לקורסי עבודה בגובה לעובדים או לרענונים שאינם מדריכי עבודה בגובה.",
       "file_name": "generated/course_work_at_height_instructor.txt",
-      "source_count": 4,
+      "source_count": 1,
       "source_files": [
-        "raw/posts/772-d7-a7-d7-95-d7-a8-d7-a1--d7-9e-d7-93-d7-a8-d7-99-d7-9a--d7-a2-d7-91-d7-95-d7-93-d7-94--d7-91-d7-92-d7-95-d7-91-d7-94.json",
-        "raw/posts/1392-d7-a9-d7-90-d7-9c-d7-95-d7-aa--d7-a0-d7-a4-d7-95-d7-a6-d7-95-d7-aa--d7-a7-d7-95-d7-a8-d7-a1--d7-a8-d7-a2-d7-a0-d7-95-d7-.json",
-        "raw/posts/2409-d7-94-d7-93-d7-a8-d7-9b-d7-aa--d7-a2-d7-91-d7-95-d7-93-d7-95-d7-aa--d7-91-d7-92-d7-95-d7-91-d7-94-2.json",
-        "raw/posts/1196-d7-9e-d7-93-d7-a8-d7-99-d7-9a--d7-a2-d7-91-d7-95-d7-93-d7-94--d7-91-d7-92-d7-95-d7-91-d7-94.json"
+        "drive:1mOBxMtBGhPBD-R2Opd0UMnQQIRDnjDiW"
+      ],
+      "aliases": [
+        "הכשרת מדריך עבודה בגובה",
+        "מדריך עבודה בגובה",
+        "קורס מדריך עבודות בגובה",
+        "קורס מדריכי עבודה בגובה"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1mOBxMtBGhPBD-R2Opd0UMnQQIRDnjDiW",
+          "title": "הצעת מחיר לקורס מדריכי עבודה בגובה.docx",
+          "folder_path": "בטיחות",
+          "modified_time": "2026-08-16T13:09:14.000Z",
+          "url": "https://docs.google.com/document/d/1mOBxMtBGhPBD-R2Opd0UMnQQIRDnjDiW/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        }
       ]
     },
     {
@@ -421,41 +796,110 @@
     {
       "tool_id": "course_good_instruction",
       "display_name": "קורס הדרכה טובה",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורס הדרכה טובה במכללת במבי, כולל מתכונת, דרישות הסמכה, תעודה, ימי כשירות, מטרת ההכשרה, נושאי לימוד, שוברים.",
+      "description": "מידע על קורס \"הדרכה טובה\" / מדריך בטיחות מוסמך: מטרות ההכשרה, מבנה ומשך, נושאי לימוד, דרישות השתתפות והסמכה, תעודה והרשאות. יש להשתמש כאשר הלקוח שואל על תוכן הקורס, התאמה לממוני בטיחות, ימי כשירות, תנאי מעבר או משמעות ההסמכה.",
       "file_name": "generated/course_good_instruction.txt",
       "source_count": 1,
       "source_files": [
-        "raw/posts/1908-d7-94-d7-93-d7-a8-d7-9b-d7-94--d7-98-d7-95-d7-91-d7-94.json"
+        "drive:1pPDWUAbn75W7H7JOeihNNgaQF0QRJgfI"
+      ],
+      "aliases": [
+        "הדרכה טובה",
+        "מדריך בטיחות מוסמך",
+        "קורס הדרכה טובה",
+        "קורס מדריך בטיחות מוסמך"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1pPDWUAbn75W7H7JOeihNNgaQF0QRJgfI",
+          "title": "הצעת מחיר לקורס הדרכה טובה.docx",
+          "folder_path": "בטיחות",
+          "modified_time": "2026-08-17T07:18:53.000Z",
+          "url": "https://docs.google.com/document/d/1pPDWUAbn75W7H7JOeihNNgaQF0QRJgfI/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        }
       ]
     },
     {
       "tool_id": "course_hazardous_materials_transport_refresher",
       "display_name": "רענון הובלת חומ\"ס",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על רענון הובלת חומרים מסוכנים / רענון הובלת חומ\"ס במכללת במבי, כולל נושאי לימוד, תנאי הסמכה, חידוש היתר, שוברים.",
+      "description": "יש להשתמש בכלי זה למענה על שאלות לגבי קורס רענון לנהגים המבקשים לחדש היתר להובלת חומרים מסוכנים, כולל תנאי סף, מתכונת הקורס, נושאי לימוד, תעודה וחידוש היתר. אין להשתמש בו עבור קורס ראשוני להובלת חומ\"ס או קורסים אחרים.",
       "file_name": "generated/course_hazardous_materials_transport_refresher.txt",
       "source_count": 1,
       "source_files": [
-        "raw/posts/2789-d7-a8-d7-a2-d7-a0-d7-95-d7-9f--d7-94-d7-95-d7-91-d7-9c-d7-aa--d7-97-d7-95-d7-9e-d7-a1.json"
+        "drive:1SZ_p7wsyyHimT8svm26B3ptnCOXKf1pB"
+      ],
+      "aliases": [
+        "ריענון הובלת חומ\"ס",
+        "ריענון חומס",
+        "רענון הובלת חומ\"ס",
+        "רענון הובלת חומס",
+        "רענון הובלת חומרים מסוכנים",
+        "רענון חומ\"ס",
+        "רענון חומס",
+        "רענון מוביל חומ\"ס",
+        "רענון נהג חומ\"ס"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1SZ_p7wsyyHimT8svm26B3ptnCOXKf1pB",
+          "title": "הצעת מחיר רענון חומס.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-06T12:12:51.000Z",
+          "url": "https://docs.google.com/document/d/1SZ_p7wsyyHimT8svm26B3ptnCOXKf1pB/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        }
       ]
     },
     {
       "tool_id": "course_hazmat_transport_manager_refresh",
       "display_name": "ריענון אחראי שינוע חומ\"ס",
-      "description": "יש להשתמש בכלי זה רק כאשר משתמש שואל על ריענון אחראי שינוע חומרים מסוכנים / אחראי שינוע חומ\"ס. אין להשתמש בו עבור רענון הובלת חומ\"ס, ריענון מוביל חומ\"ס או ריענון נהג חומ\"ס.",
+      "description": "מידע לסוכן על קורס ריענון לאחראי שינוע/בטיחות שינוע חומרים מסוכנים, כולל קהל יעד, חובת ריענון, תנאי כניסה, מתכונת, מיקום, נושאי לימוד ואישור סיום.",
       "file_name": "generated/course_hazmat_transport_manager_refresh.txt",
       "source_count": 1,
       "source_files": [
-        "manual/hazmat_transport_manager_refresh"
+        "drive:1DMJG8Ipddmmoj6BEqVfZyDZz7V1x6trt"
+      ],
+      "aliases": [
+        "ריענון אחראי בטיחות שינוע חומרים מסוכנים",
+        "ריענון אחראי לבטיחות שינוע חומ\"ס",
+        "ריענון אחראי שינוע חומ\"ס",
+        "ריענון אחראי שינוע חומרים מסוכנים"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1DMJG8Ipddmmoj6BEqVfZyDZz7V1x6trt",
+          "title": "הצעת מחיר לריענון אחראי שינוע חומס.pdf",
+          "folder_path": "",
+          "modified_time": "2026-08-17T07:32:28.000Z",
+          "url": "https://drive.google.com/file/d/1DMJG8Ipddmmoj6BEqVfZyDZz7V1x6trt/view?usp=drivesdk"
+        }
       ]
     },
     {
       "tool_id": "course_hazmat_transport_manager",
       "display_name": "קורס אחראי שינוע חומ\"ס",
-      "description": "יש להשתמש בכלי זה רק עבור קורס ההכשרה הראשוני לאחראי שינוע חומ\"ס. אין להשתמש בו עבור ריענון אחראי שינוע או עבור קורס/ריענון הובלת חומ\"ס לנהגים.",
+      "description": "מידע לסוכן שירות על קורס אחראי שינוע חומרים מסוכנים: דרישות כניסה, מתכונת ומשך, נושאי לימוד, מבחנים, תעודות ומדיניות שינויי מועד. יש להשתמש כאשר לקוח מתעניין בהכשרה או הסמכה לאחראי על בטיחות ההובלה של חומרים מסוכנים.",
       "file_name": "generated/course_hazmat_transport_manager.txt",
       "source_count": 1,
       "source_files": [
-        "manual/hazmat_transport_manager"
+        "drive:1_mOYDSblw-G9_d9drnp2crSyZ2ZM2kgt"
+      ],
+      "aliases": [
+        "אחראי בטיחות הובלת חומ\"ס",
+        "אחראי על בטיחות ההובלה של חומרים מסוכנים",
+        "אחראי שינוע חומרים מסוכנים",
+        "קורס אחראי שינוע חומ\"ס"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1_mOYDSblw-G9_d9drnp2crSyZ2ZM2kgt",
+          "title": "הצעת מחיר לקורס אחראי שינוע חומס.pdf",
+          "folder_path": "",
+          "modified_time": "2026-08-17T07:27:59.000Z",
+          "url": "https://drive.google.com/file/d/1_mOYDSblw-G9_d9drnp2crSyZ2ZM2kgt/view?usp=drivesdk"
+        }
       ]
     },
     {
@@ -481,15 +925,31 @@
     {
       "tool_id": "course_public_transport_vehicle",
       "display_name": "קורס רכב ציבורי",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורס רכב ציבורי במכללת במבי, כולל רישיון D לאוטובוס או D1/D2 לאוטובוס זעיר, תנאי קבלה, מתכונת עיונית ומעשית, מיקום.",
+      "description": "מידע על קורס נהיגה עיוני לרכב ציבורי במכללת במבי: תנאי קבלה, תהליך מקדים מול משרד התחבורה/רשות הרישוי, היקף ונושאי לימוד, נוכחות, השלמות, מבחנים, תעודת גמר והמשך להכשרה מעשית למונית או אוטובוס.",
       "file_name": "generated/course_public_transport_vehicle.txt",
-      "source_count": 5,
+      "source_count": 1,
       "source_files": [
-        "raw/posts/804-d7-a7-d7-95-d7-a8-d7-a1--d7-a8-d7-9b-d7-91--d7-a6-d7-99-d7-91-d7-95-d7-a8-d7-99.json",
-        "raw/posts/3361-d7-a2-d7-9e-d7-95-d7-93--d7-a0-d7-97-d7-99-d7-aa-d7-94--d7-a7-d7-95-d7-a8-d7-a1--d7-a8-d7-9b-d7-91--d7-a6-d7-99-d7-91-d7.json",
-        "raw/posts/4009-d7-9e-d7-94--d7-a6-d7-a8-d7-99-d7-9a--d7-9b-d7-93-d7-99--d7-9c-d7-a7-d7-91-d7-9c--d7-a8-d7-99-d7-a9-d7-99-d7-95-d7-9f--d.json",
-        "raw/posts/2428-d7-a8-d7-99-d7-a9-d7-99-d7-95-d7-9f--d7-9c-d7-90-d7-95-d7-98-d7-95-d7-91-d7-95-d7-a1.json",
-        "raw/posts/2386-d7-a8-d7-99-d7-a9-d7-99-d7-95-d7-9f--d7-9c-d7-90-d7-95-d7-98-d7-95-d7-91-d7-95-d7-a1--d7-96-d7-a2-d7-99-d7-a8--d7-a6-d7-.json"
+        "drive:11kfqBrG9h2SD0e3sg-a7dKdIck77Tn7c"
+      ],
+      "aliases": [
+        "קורס אוטובוס",
+        "קורס מונית",
+        "קורס נהיגה על רכב ציבורי",
+        "רישיון D",
+        "רישיון D1",
+        "רישיון D2",
+        "רישיון רכב ציבורי",
+        "רכב ציבורי"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "11kfqBrG9h2SD0e3sg-a7dKdIck77Tn7c",
+          "title": "הצעת מחיר לרכב ציבורי.docx",
+          "folder_path": "",
+          "modified_time": "2026-07-28T11:23:20.000Z",
+          "url": "https://docs.google.com/document/d/11kfqBrG9h2SD0e3sg-a7dKdIck77Tn7c/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        }
       ]
     },
     {
@@ -515,34 +975,95 @@
     {
       "tool_id": "course_tractor",
       "display_name": "קורס טרקטור",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורס טרקטור במכללת במבי, כולל גיל התחלה, טופס ירוק, תיאוריה, טסט, מתכונת הקורס, כלים שמותר לנהוג בהם ותשלום אגרת רישיון.",
+      "description": "מידע על קורסי רישיון טרקטור במכללת במבי: קורס טרקטור דרגה 1, תנאי גיל, טופס ירוק, מבנה עיוני ומעשי, מבחנים, מיקום וציוד; וכן קורס טרקטור לעובדים זרים תאילנדים, דרישות ויזה/מספר ישראלי, לימוד בתאית באמצעות מתורגמן ושלבי ההכשרה.",
       "file_name": "generated/course_tractor.txt",
-      "source_count": 4,
+      "source_count": 2,
       "source_files": [
-        "raw/posts/762-d7-a7-d7-95-d7-a8-d7-a1--d7-98-d7-a8-d7-a7-d7-98-d7-95-d7-a8.json",
-        "raw/posts/1401-d7-a9-d7-90-d7-9c-d7-95-d7-aa--d7-a0-d7-a4-d7-95-d7-a6-d7-95-d7-aa--d7-9c-d7-a7-d7-95-d7-a8-d7-a1--d7-9c-d7-94-d7-95-d7-.json",
-        "raw/posts/1289-d7-aa-d7-99-d7-90-d7-95-d7-a8-d7-99-d7-94--d7-9c-d7-98-d7-a8-d7-a7-d7-98-d7-95-d7-a8.json",
-        "raw/posts/1278-d7-9e-d7-90-d7-99-d7-96-d7-94--d7-92-d7-99-d7-9c--d7-95-d7-90-d7-99-d7-9a--d7-9e-d7-95-d7-a6-d7-99-d7-90-d7-99-d7-9d--d7.json"
+        "drive:1tRV_2yXCjmZqMsmnxup_X0IIvZoGFKYu",
+        "drive:1CmgzJvZSCIgfoOhYAmwTEy8SjlAKgj-W"
+      ],
+      "aliases": [
+        "tractor course",
+        "טרקטור דרגה 1",
+        "קורס טרקטור",
+        "קורס טרקטור דרגה 1",
+        "קורס טרקטור לעובדים זרים תאילנדים",
+        "קורס טרקטור לתאילנדים",
+        "קורס רישיון טרקטור",
+        "רישיון טרקטור",
+        "רישיון טרקטור לעובדים זרים",
+        "רישיון לטרקטור"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1tRV_2yXCjmZqMsmnxup_X0IIvZoGFKYu",
+          "title": "הצעת מחיר לקורס טרקטור דרגה  1.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-17T07:29:59.000Z",
+          "url": "https://docs.google.com/document/d/1tRV_2yXCjmZqMsmnxup_X0IIvZoGFKYu/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        },
+        {
+          "file_id": "1CmgzJvZSCIgfoOhYAmwTEy8SjlAKgj-W",
+          "title": "הצעת מחיר לקורס תאלינדים טרקטור ללא תאריכים.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-06T12:28:44.000Z",
+          "url": "https://docs.google.com/document/d/1CmgzJvZSCIgfoOhYAmwTEy8SjlAKgj-W/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        }
       ]
     },
     {
       "tool_id": "course_traffic_accident_investigation_safety_officers",
       "display_name": "השתלמות חקירת תאונות דרכים לקציני בטיחות",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על השתלמות בנושא חקירת תאונות דרכים לקציני בטיחות במכללת במבי, כולל תנאי קבלה, מתכונת, נושאי לימוד, מבחן, תעודה, שוברים.",
+      "description": "מידע על השתלמות/יום עיון בנושא חקירת תאונות דרכים והפקת לקחים המיועדת לקציני בטיחות בתעבורה בעלי כתב הסמכה בתוקף, כולל מטרות, תנאי קבלה, היקף, נושאי לימוד, דרישות סיום ותעודה.",
       "file_name": "generated/course_traffic_accident_investigation_safety_officers.txt",
       "source_count": 1,
       "source_files": [
-        "raw/posts/3254-d7-94-d7-a9-d7-aa-d7-9c-d7-9e-d7-95-d7-aa--d7-91-d7-a0-d7-95-d7-a9-d7-90--d7-97-d7-a7-d7-99-d7-a8-d7-aa--d7-aa-d7-90-d7-.json"
+        "drive:1UGwzfr6MKksKxIrObwjY8m_TdWlfuhQL"
+      ],
+      "aliases": [
+        "השתלמות חקר תאונות דרכים",
+        "השתלמות תאונות דרכים לקציני בטיחות",
+        "חקירת תאונות דרכים והפקת לקחים",
+        "חקירת תאונות דרכים לקציני בטיחות",
+        "יום עיון חקר תאונות דרכים"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1UGwzfr6MKksKxIrObwjY8m_TdWlfuhQL",
+          "title": "הצעת מחיר -השתלמות יום עיון בנושא חקר תאונות דרכים.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-06T12:28:25.000Z",
+          "url": "https://docs.google.com/document/d/1UGwzfr6MKksKxIrObwjY8m_TdWlfuhQL/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        }
       ]
     },
     {
       "tool_id": "course_cargo_securing",
       "display_name": "אבטחת מטענים",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורס/השתלמות אבטחת מטענים במכללת במבי, כולל מתכונת, דרישות קבלה, תעודה, תקנות, בחינות, תנאי קבלת היתר, נושאי לימוד, שוברים.",
+      "description": "יש להשתמש בכלי זה למענה על שאלות בנושא השתלמות אבטחת מטענים / ריתום מטענים לנהגים ברכב כבד: קהל יעד, תנאי קבלה, משך ההשתלמות, נושאי לימוד, תנאים לקבלת תעודה והכרה בתעודה.",
       "file_name": "generated/course_cargo_securing.txt",
       "source_count": 1,
       "source_files": [
-        "raw/posts/2129-d7-90-d7-91-d7-98-d7-97-d7-aa--d7-9e-d7-98-d7-a2-d7-a0-d7-99-d7-9d.json"
+        "drive:14K63NNr6vc5i5JBl5AsDpllZgRe_s-3a"
+      ],
+      "aliases": [
+        "אבטחה וריתום מטענים",
+        "השתלמות אבטחת מטענים",
+        "יישום הוראות תקן אבטחת מטענים",
+        "קורס אבטחת מטענים",
+        "ריתום מטענים"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "14K63NNr6vc5i5JBl5AsDpllZgRe_s-3a",
+          "title": "הצעת מחיר להשתלמות אבטחת מטענים.pdf",
+          "folder_path": "",
+          "modified_time": "2026-06-21T10:15:15.000Z",
+          "url": "https://drive.google.com/file/d/14K63NNr6vc5i5JBl5AsDpllZgRe_s-3a/view?usp=drivesdk"
+        }
       ]
     },
     {
@@ -581,11 +1102,281 @@
     {
       "tool_id": "course_digital_tachograph_safety_officers",
       "display_name": "השתלמות טכוגרף דיגיטלי לקציני בטיחות",
-      "description": "יש להשתמש בכלי זה כאשר משתמש שואל על השתלמות טכוגרף דיגיטלי לקציני בטיחות במכללת במבי, כולל מטרת ההשתלמות, תנאי קבלה, מתכונת, נושאי לימוד, מבחן, תעודה, מיקום ופרטי קשר.",
+      "description": "יש להשתמש בכלי זה למענה על שאלות לגבי השתלמות טכוגרף דיגיטלי לקציני בטיחות בתעבורה: מטרות ההשתלמות, תנאי קבלה, משך, נושאי לימוד, תנאים לקבלת תעודה וסוג התעודה.",
       "file_name": "generated/course_digital_tachograph_safety_officers.txt",
+      "source_count": 3,
+      "source_files": [
+        "drive:1DAQIduHPKRU99DehQTOEppvb8kqRGPXO",
+        "drive:1I5VtRIkeVYu3-qeeh5esxQ4ngYvPQzFR",
+        "drive:1pmGCxHaY_Icw-uVEmMoMZ76SkYDeg6q8"
+      ],
+      "aliases": [
+        "השתלמות טכוגרף דיגיטלי",
+        "השתלמות טכוגרף לקציני בטיחות",
+        "השתלמות לקציני בטיחות בנושא טכוגרף",
+        "טכוגרף דיגיטלי לקציני בטיחות",
+        "טכוגרף לקציני בטיחות",
+        "יום עיון טכוגרף דיגיטלי",
+        "קורס טכוגרף לקציני בטיחות"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1DAQIduHPKRU99DehQTOEppvb8kqRGPXO",
+          "title": "הצעת מחיר -השתלמות טכוגרף לקציני  בטיחות.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-10T08:26:13.000Z",
+          "url": "https://docs.google.com/document/d/1DAQIduHPKRU99DehQTOEppvb8kqRGPXO/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        },
+        {
+          "file_id": "1I5VtRIkeVYu3-qeeh5esxQ4ngYvPQzFR",
+          "title": "הצעת מחיר -השתלמות יום עיון בנושא מערכות עזר.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-06T12:29:03.000Z",
+          "url": "https://docs.google.com/document/d/1I5VtRIkeVYu3-qeeh5esxQ4ngYvPQzFR/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        },
+        {
+          "file_id": "1pmGCxHaY_Icw-uVEmMoMZ76SkYDeg6q8",
+          "title": "-ראובן אליאסי -הצעת מחיר -השתלמות טכוגרף לקציני  בטיחות.pdf",
+          "folder_path": "",
+          "modified_time": "2026-07-15T05:37:39.000Z",
+          "url": "https://drive.google.com/file/d/1pmGCxHaY_Icw-uVEmMoMZ76SkYDeg6q8/view?usp=drivesdk"
+        }
+      ]
+    },
+    {
+      "tool_id": "course_annual_driver_refresher",
+      "display_name": "ריענון נהגים שנתי",
+      "description": "יש להשתמש בכלי זה למענה על שאלות בנושא ריענון נהגים שנתי: מטרת ההדרכה, קהל יעד, משך ומתכונת, תכנים עיוניים, אישור בסיום, מיקום אפשרי, ציוד ומסמכים נדרשים ומדיניות ביטולים. הכלי מיועד לריענון שנתי בלבד ואינו מיועד לקורסי נהיגה ראשוניים או להכשרות אחרות.",
+      "file_name": "generated/course_annual_driver_refresher.txt",
       "source_count": 1,
       "source_files": [
-        "raw/posts/4909-d7-94-d7-a9-d7-aa-d7-9c-d7-9e-d7-95-d7-aa--d7-98-d7-9b-d7-95-d7-92-d7-a8-d7-a3--d7-93-d7-99-d7-92-d7-99-d7-98-d7-9c-d7-9.json"
+        "drive:1DzrGc-RZhFTlHVKUft9GnS2LZfRHdF2v"
+      ],
+      "aliases": [
+        "הדרכת נהגי משאיות חורף קיץ",
+        "הדרכת נהגים שנתית",
+        "ריענון נהגים שנתי",
+        "ריענון נהיגה שנתי",
+        "רענון נהגים שנתי",
+        "רענון נהיגה שנתי"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1DzrGc-RZhFTlHVKUft9GnS2LZfRHdF2v",
+          "title": "הצעת מחיר לריענון נהגים שנתי.pdf",
+          "folder_path": "",
+          "modified_time": "2026-08-13T08:01:49.000Z",
+          "url": "https://drive.google.com/file/d/1DzrGc-RZhFTlHVKUft9GnS2LZfRHdF2v/view?usp=drivesdk"
+        }
+      ]
+    },
+    {
+      "tool_id": "course_crane_exam_day",
+      "display_name": "יום בחינות עגורן/אתת",
+      "description": "מידע על יום בחינות מרוכז לעגורנאים ואתתים שרישיונם פג ונדרשים לבחינה מעשית או עיונית ומעשית לצורך חידוש הסמכה, כולל דרישות לפי משך פקיעת הרישיון ודגשים לוגיסטיים.",
+      "file_name": "generated/course_crane_exam_day.txt",
+      "source_count": 1,
+      "source_files": [
+        "drive:13ukSv0JPDMhCUN_NGO16p3n9OpcbC6a8"
+      ],
+      "aliases": [
+        "בחינה לחידוש רישיון אתת",
+        "בחינה לחידוש רישיון עגורן",
+        "יום בחינות אתת",
+        "יום בחינות מרוכז עגורן",
+        "יום בחינות עגורן",
+        "מבחן מעשי עגורן",
+        "מבחן עיוני ומעשי עגורן"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "13ukSv0JPDMhCUN_NGO16p3n9OpcbC6a8",
+          "title": "הצעת מחיר יום בחינות מרוכז עגורן 2026.pdf",
+          "folder_path": "עגורן",
+          "modified_time": "2026-07-08T07:59:44.000Z",
+          "url": "https://drive.google.com/file/d/13ukSv0JPDMhCUN_NGO16p3n9OpcbC6a8/view?usp=drivesdk"
+        }
+      ]
+    },
+    {
+      "tool_id": "course_crane_operator_refresher",
+      "display_name": "ריענון מפעילי עגורן",
+      "description": "יש להשתמש בכלי זה עבור פניות בנושא הדרכת ריענון למפעילי עגורן, במיוחד עגורן גשר ועגורנים הנמצאים בשימוש בארגון. הכלי מתאים להסבר על מתכונת ההדרכה, משך, נושאים נלמדים והבחנה בין ריענון לבין חידוש תעודת עגורן.",
+      "file_name": "generated/course_crane_operator_refresher.txt",
+      "source_count": 1,
+      "source_files": [
+        "drive:1YCqTH8LsH_PDV7ncmSDUUSNgvRn1iQXh"
+      ],
+      "aliases": [
+        "הדרכת ריענון לעגורנאים",
+        "ריענון מפעילי עגורן",
+        "ריענון עגורן",
+        "ריענון עגורן גשר",
+        "רענון מפעילי עגורן",
+        "רענון עגורן",
+        "רענון עגורן גשר"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1YCqTH8LsH_PDV7ncmSDUUSNgvRn1iQXh",
+          "title": "הצעת מחיר לריענון מפעילי עגורן 2026.pdf",
+          "folder_path": "עגורן",
+          "modified_time": "2026-07-14T08:40:30.000Z",
+          "url": "https://drive.google.com/file/d/1YCqTH8LsH_PDV7ncmSDUUSNgvRn1iQXh/view?usp=drivesdk"
+        }
+      ]
+    },
+    {
+      "tool_id": "course_driver_assistance_systems_safety_officers",
+      "display_name": "השתלמות מערכות עזר מתקדמות לנהג ADAS לקציני בטיחות",
+      "description": "מידע לסוכן על השתלמות מקצועית לקציני בטיחות בתעבורה בנושא מערכות עזר מתקדמות לנהג ADAS: קהל יעד, תנאי קבלה, מתכונת, נושאי לימוד, דרישות סיום ותעודה.",
+      "file_name": "generated/course_driver_assistance_systems_safety_officers.txt",
+      "source_count": 1,
+      "source_files": [
+        "drive:1PRjifwvcmTJzthsj310UkRtQIpLt4bQe"
+      ],
+      "aliases": [
+        "השתלמות ADAS לקציני בטיחות",
+        "יום עיון מערכות עזר מתקדמות לנהג לקציני בטיחות",
+        "מערכות בטיחות מתקדמות לרכב לקציני בטיחות",
+        "מערכות עזר מתקדמות לנהג ADAS"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1PRjifwvcmTJzthsj310UkRtQIpLt4bQe",
+          "title": "הצעת מחיר יום עיון לקציני בטיחות מערכות עזר מתקדמות לנהג.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-06T12:37:44.000Z",
+          "url": "https://docs.google.com/document/d/1PRjifwvcmTJzthsj310UkRtQIpLt4bQe/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        }
+      ]
+    },
+    {
+      "tool_id": "course_explosives_training",
+      "display_name": "הכשרת חומרי נפץ",
+      "description": "מידע על הכשרת נהגים להובלת חומרים מסוכנים מסוג חומרי נפץ/נפיצים: קהל יעד, תנאי קבלה, דרישות רגולטוריות, נושאי לימוד, משך, מיקום, מבחנים, תהליך אישור ותעודה, ומדיניות ביטולים.",
+      "file_name": "generated/course_explosives_training.txt",
+      "source_count": 2,
+      "source_files": [
+        "drive:1t6A0_LPbICgi3vX0knpg_ngfvNolapkU",
+        "drive:1NaIRniRyHCyVlHblJt-gQPwpPmtuwMJb"
+      ],
+      "aliases": [
+        "הובלת חומרי נפץ",
+        "הובלת נפיצים",
+        "הכשרת חומרי נפץ",
+        "הכשרת נפיצים",
+        "חומרים מסוכנים חומרי נפץ",
+        "חומ״ס נפיצים",
+        "נפיצים",
+        "קורס חומרי נפץ",
+        "קורס נפיצים"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1t6A0_LPbICgi3vX0knpg_ngfvNolapkU",
+          "title": "הצעת מחיר להכשרה של חומרי נפץ+ אגרות מבחן.docx",
+          "folder_path": "",
+          "modified_time": "2026-08-17T07:27:10.000Z",
+          "url": "https://docs.google.com/document/d/1t6A0_LPbICgi3vX0knpg_ngfvNolapkU/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        },
+        {
+          "file_id": "1NaIRniRyHCyVlHblJt-gQPwpPmtuwMJb",
+          "title": "הצעת מחיר להכשרה של חומרי נפץ+ אגרות מבחן דאסל מרחבים.pdf",
+          "folder_path": "",
+          "modified_time": "2026-06-09T12:09:24.000Z",
+          "url": "https://drive.google.com/file/d/1NaIRniRyHCyVlHblJt-gQPwpPmtuwMJb/view?usp=drivesdk"
+        }
+      ]
+    },
+    {
+      "tool_id": "course_pedestrian_forklift",
+      "display_name": "הסמכת/ריענון מלגזת אדם הולך",
+      "description": "מידע על קורס הסמכה או ריענון להפעלת מלגזת אדם הולך, כולל מתכונת, משך, נושאי לימוד, דרישות מוקדמות, מסמכים נדרשים ואישור בסיום.",
+      "file_name": "generated/course_pedestrian_forklift.txt",
+      "source_count": 1,
+      "source_files": [
+        "drive:1zZy8WOfuGxX9_jTds6ZJ__HE6jDUmO07"
+      ],
+      "aliases": [
+        "הדרכת מלגזת אדם הולך",
+        "הסמכת מלגזת אדם הולך",
+        "מלגזת אדם הולך",
+        "מפעיל מכונת הרמה",
+        "ריענון מלגזת אדם הולך",
+        "תקנה 18ג"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1zZy8WOfuGxX9_jTds6ZJ__HE6jDUmO07",
+          "title": "הצעת מחיר הסמכת מלגזת אדם הולך.pdf",
+          "folder_path": "",
+          "modified_time": "2026-08-17T07:26:32.000Z",
+          "url": "https://drive.google.com/file/d/1zZy8WOfuGxX9_jTds6ZJ__HE6jDUmO07/view?usp=drivesdk"
+        }
+      ]
+    },
+    {
+      "tool_id": "course_pedestrian_forklift_refresher",
+      "display_name": "ריענון מלגזת אדם הולך",
+      "description": "מידע לסוכן שירות על הדרכת ריענון בטיחותית למפעילי מלגזת אדם הולך: קהל יעד, משך, מתכונת, נושאי לימוד, דרישות, אישור סיום ולוגיסטיקה. יש להשתמש כאשר הלקוח שואל על ריענון שנתי או הדרכת בטיחות למלגזת אדם הולך, ולא עבור קורס מלגזה רגיל או הכשרה ראשונית אחרת.",
+      "file_name": "generated/course_pedestrian_forklift_refresher.txt",
+      "source_count": 1,
+      "source_files": [
+        "drive:1m_hgEfvVwy3gWO1iCRBsM2QmkIE0XXoH"
+      ],
+      "aliases": [
+        "הדרכת מלגזת אדם הולך",
+        "ריענון מלגזה אדם הולך",
+        "ריענון מלגזת אדם הולך",
+        "ריענון שנתי מלגזת אדם הולך",
+        "רענון מלגזה אדם הולך",
+        "רענון מלגזת אדם הולך"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1m_hgEfvVwy3gWO1iCRBsM2QmkIE0XXoH",
+          "title": "הצעת מחיר ריענון מלגזת אדם הולך.pdf",
+          "folder_path": "",
+          "modified_time": "2026-06-30T06:09:44.000Z",
+          "url": "https://drive.google.com/file/d/1m_hgEfvVwy3gWO1iCRBsM2QmkIE0XXoH/view?usp=drivesdk"
+        }
+      ]
+    },
+    {
+      "tool_id": "course_professional_driver_training",
+      "display_name": "הדרכת נהגים מקצועית",
+      "description": "יש להשתמש בכלי זה למענה על שאלות בנושא הדרכת/ריענון נהגים מקצועיים במכללת במבי: קהל יעד, מתכונת ההדרכה, משך, נושאים, דרישות מקדימות, תעודה/אישור, מיקום וצרכים לוגיסטיים, וכן מדיניות ביטולים כללית. מתאים לריענון נהגי חברה, נהגי רכב פרטי, נהגי מלגזה ונהגי משאית, ולא לקורסי נהיגה אחרים.",
+      "file_name": "generated/course_professional_driver_training.txt",
+      "source_count": 1,
+      "source_files": [
+        "drive:1PNaKMsbuYxmDCeOF6-fnneRf4JbGsltg"
+      ],
+      "aliases": [
+        "הדרכת בטיחות לנהגים",
+        "הדרכת נהגי חברה",
+        "הדרכת נהגים מקצועית",
+        "ריענון נהגים מקצועיים",
+        "ריענון נהיגה מקצועית",
+        "ריענון שנתי לנהגים"
+      ],
+      "source_type": "drive_quote",
+      "source_metadata": [
+        {
+          "file_id": "1PNaKMsbuYxmDCeOF6-fnneRf4JbGsltg",
+          "title": "הצעת מחיר להדרכת נהגים מקצועית .pdf",
+          "folder_path": "",
+          "modified_time": "2026-08-17T08:05:25.000Z",
+          "url": "https://drive.google.com/file/d/1PNaKMsbuYxmDCeOF6-fnneRf4JbGsltg/view?usp=drivesdk"
+        }
       ]
     }
   ],
@@ -2717,5 +3508,13 @@
       "reason": "העמוד מכיל רק כותרת 'אודות' ללא מידע עובדתי או שירותי שימושי לבוט.",
       "confidence": "high"
     }
-  ]
+  ],
+  "drive_run": {
+    "root_folder_id": "1_sBd6S_X2bZREFVzwdBqKA64TE_nSgNh",
+    "excluded_folder_ids": [
+      "1jM2-l9Eox3sGv4MBKjHh7MXFCJ_utgDp"
+    ],
+    "inventory_generated_at": "2026-08-22T17:23:33.318Z",
+    "physical_file_count": 108
+  }
 }
