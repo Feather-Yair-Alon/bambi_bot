@@ -15,6 +15,7 @@ REQUIRED_CUSTOMER_DETAILS = ["שם מלא", "מספר טלפון", "תעודת �
 PAYMENT_INTENTS = {"FULL", "DEPOSIT", "REFRESHER", "FRIDAY", "THEORY", "PRACTICAL", "EXAM", "GENERAL"}
 WORK_AT_HEIGHT_CATEGORY_CODE = "80015"
 WORK_AT_HEIGHT_CATEGORY_NAME = "\u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4"
+HEAVY_VEHICLE_CATEGORY_CODE = "80012"
 DISCOUNT_KEYWORDS = ("הנחה", "אחוז הנחה", "10 אחוז", "15 אחוז", "discount")
 PAYMENT_SEARCH_STOPWORDS = {
     "course",
@@ -51,12 +52,19 @@ class PaymentLinkService:
         category_name: str | None = None,
         product_id: str | None = None,
     ) -> dict[str, Any]:
+        heavy_vehicle = await self._resolve_heavy_vehicle_request(category_id, category_code, category_name)
+        if heavy_vehicle:
+            return await self._get_heavy_vehicle_current_price(heavy_vehicle, category_name)
+
         payload = await self.get_course_payment_links(
             category_id=category_id,
             category_code=category_code,
             category_name=category_name,
             product_id=product_id,
         )
+        payload_category = payload.get("category") or {}
+        if not product_id and normalize_payment_text(payload_category.get("category_code")) == HEAVY_VEHICLE_CATEGORY_CODE:
+            return await self._get_heavy_vehicle_current_price(payload_category, category_name)
         links = payload.get("payment_links") or []
         prices = current_price_options_from_links(links)
         price_source = "PaymentBtnsRows.Price"
@@ -76,6 +84,72 @@ class PaymentLinkService:
             "restricted_links_summary": payload.get("restricted_links_summary") or [],
             "reason": None if prices else payload.get("reason") or "No current payment price was found.",
             "price_source": price_source,
+        }
+
+    async def _resolve_heavy_vehicle_request(
+        self,
+        category_id: str | None,
+        category_code: str | None,
+        category_name: str | None,
+    ) -> dict[str, Any] | None:
+        if normalize_payment_text(category_code) == HEAVY_VEHICLE_CATEGORY_CODE or is_heavy_vehicle_text(category_name):
+            result = await self._resolve_category(category_id, HEAVY_VEHICLE_CATEGORY_CODE, None)
+            return result.get("category") if result.get("found") else None
+        return None
+
+    async def _get_heavy_vehicle_current_price(
+        self,
+        category: dict[str, Any],
+        category_name: str | None,
+    ) -> dict[str, Any]:
+        component = heavy_vehicle_price_component(category_name)
+        products = await self._get_products_for_category(category["category_id"])
+        active_products = [product for product in products if product.get("IsActive") is not False]
+
+        theory_prices: list[dict[str, Any]] = []
+        if component != "practical":
+            rows = await self._search_payment_rows_once("משא כבד")
+            theory_links = []
+            for row in rows:
+                payment_btn = await self._resolve_payment_button(row)
+                if not payment_btn or payment_btn.get("Active") is False:
+                    continue
+                product = row.get("ProductId") if isinstance(row.get("ProductId"), dict) else {}
+                link = format_payment_link(payment_btn, row, product)
+                if is_heavy_vehicle_theory_link(link) and not is_stale_dated_payment_link(link):
+                    theory_links.append(link)
+            theory_prices = current_price_options_from_links(theory_links)
+            if not theory_prices:
+                theory_prices = [
+                    format_product_price_option(product)
+                    for product in active_products
+                    if heavy_vehicle_product_component(product) == "theory" and product.get("Price") is not None
+                ]
+
+        practical_prices = []
+        if component != "theory":
+            practical_prices = [
+                format_product_price_option(product)
+                for product in active_products
+                if heavy_vehicle_product_component(product) == "practical" and product.get("Price") is not None
+            ]
+
+        prices = dedupe_product_price_options([*theory_prices, *practical_prices])
+        sources = []
+        if theory_prices and any(price.get("payment_btn_id") for price in theory_prices):
+            sources.append("PaymentBtnsRows.Price")
+        if practical_prices or (theory_prices and not any(price.get("payment_btn_id") for price in theory_prices)):
+            sources.append("Products.Price fallback")
+        return {
+            "found": bool(prices),
+            "requires_user_choice": len(prices) > 1,
+            "requires_representative": False,
+            "category": category,
+            "matched_by": "heavy_vehicle_category_and_component",
+            "prices": prices,
+            "restricted_links_summary": [],
+            "reason": None if prices else "No current heavy vehicle price was found.",
+            "price_source": " + ".join(sources) or "Products.Price fallback",
         }
 
     async def get_course_payment_links(
@@ -663,6 +737,49 @@ def is_mismatched_course_payment_link(link: dict[str, Any], category: dict[str, 
     )
     is_heavy_vehicle = category_code == "80012" or "משא כבד" in category_name
     return bool(is_heavy_vehicle and "עגורן" in link_text)
+
+
+def is_heavy_vehicle_text(value: Any) -> bool:
+    return resolve_course_category_code(value) == HEAVY_VEHICLE_CATEGORY_CODE
+
+
+def heavy_vehicle_price_component(value: Any) -> str | None:
+    text = normalize_payment_text(value)
+    if "מעשי" in text:
+        return "practical"
+    if "עיוני" in text:
+        return "theory"
+    return None
+
+
+def heavy_vehicle_product_component(product: dict[str, Any]) -> str | None:
+    text = normalize_payment_text(product.get("Name"))
+    if not any(marker in text for marker in ("משא כבד", "משאית משא כבד", "רכב משא כבד")):
+        return None
+    if "מעשי" in text:
+        return "practical"
+    excluded = ("מקדמה", "דמי רישום", "ספר", "אגרה")
+    if not any(marker in text for marker in excluded):
+        return "theory"
+    return None
+
+
+def is_heavy_vehicle_theory_link(link: dict[str, Any]) -> bool:
+    product = link.get("product") or {}
+    text = normalize_payment_text(
+        " ".join(
+            str(value or "")
+            for value in (
+                link.get("name"),
+                link.get("title"),
+                link.get("description_for_bot"),
+                product.get("product_name"),
+            )
+        )
+    )
+    is_heavy = any(marker in text for marker in ("משא כבד", "משאית משא כבד", "רכב משא כבד"))
+    excluded = ("מקדמה", "דמי רישום", "ספר", "מעשי", "עגורן")
+    return bool(is_heavy and "עיוני" in text and not any(marker in text for marker in excluded))
 
 
 def is_company_forklift_refresher_query(value: Any) -> bool:

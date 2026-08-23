@@ -11,6 +11,7 @@ COURSE_CATEGORY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("80052", ("רענון אחראי שינוע חומס", "ריענון אחראי שינוע חומס")),
     ("80051", ("אחראי שינוע חומס",)),
     ("80003", ("רענון מלגזה", "ריענון מלגזה", "רענון שנתי למלגזה", "ריענון שנתי למלגזה")),
+    ("80012", ("משאית משא כבד", "רכב משא כבד", "משא כבד", "משאית מעל 12 טון")),
     ("80031", ("נאמני בטיחות", "נאמן בטיחות")),
     ("80015", ("עבודה בגובה",)),
     ("80001", ("מלגזה",)),
@@ -25,6 +26,7 @@ KNOWLEDGE_TOOL_CATEGORY_CODES: dict[str, str] = {
     "course_safety_trustees": "80031",
     "course_hazmat_transport_manager_refresh": "80052",
     "course_hazmat_transport_manager": "80051",
+    "course_heavy_vehicle": "80012",
 }
 
 LANGUAGE_ALIASES: dict[str, tuple[str, ...]] = {

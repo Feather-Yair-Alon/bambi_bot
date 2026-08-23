@@ -47,6 +47,7 @@ class FakeMyBusiness:
             },
             {"objectId": "cat_work_at_height", "Name": "\u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4", "Code": "80015"},
             {"objectId": "cat_work_at_height_instructor_refresh", "Name": "\u05e8\u05e2\u05e0\u05d5\u05df \u05de\u05d3\u05e8\u05d9\u05da \u05d2\u05d5\u05d1\u05d4", "Code": "80018"},
+            {"objectId": "cat_heavy_vehicle", "Name": "משאית משא כבד C", "Code": "80012"},
         ]
         self.products = [
             {
@@ -145,6 +146,22 @@ class FakeMyBusiness:
                 "IsActive": True,
                 "Category": pointer("ProductCategories", "cat_work_at_height_instructor_refresh"),
             },
+            {
+                "objectId": "prod_heavy_vehicle_theory",
+                "Name": "עבור קורס משא כבד -",
+                "CatalogNumber": "80012",
+                "Price": 3729,
+                "IsActive": True,
+                "Category": pointer("ProductCategories", "cat_heavy_vehicle"),
+            },
+            {
+                "objectId": "prod_heavy_vehicle_practical",
+                "Name": "חלק מעשי משא כבד",
+                "CatalogNumber": "80012",
+                "Price": 3846,
+                "IsActive": True,
+                "Category": pointer("ProductCategories", "cat_heavy_vehicle"),
+            },
         ]
         self.payment_buttons = {
             "btn_forklift_full": {"objectId": "btn_forklift_full", "Name": "קורס מלגזה", "Title": "קורס מלגזה", "Active": True},
@@ -178,6 +195,12 @@ class FakeMyBusiness:
                 "Title": "\u05d3\u05e3 \u05ea\u05e9\u05dc\u05d5\u05dd \u05e8\u05d9\u05e2\u05e0\u05d5\u05df \u05de\u05d3\u05e8\u05d9\u05db\u05d9 \u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4",
                 "Active": True,
             },
+            "btn_heavy_vehicle_theory": {
+                "objectId": "btn_heavy_vehicle_theory",
+                "Name": "קורס משא כבד עיוני",
+                "Title": "דף תשלום קורס משא כבד עיוני",
+                "Active": True,
+            },
         }
         self.rows = [
             row("row_f1", "btn_forklift_full", "prod_forklift", "קורס מלגזה מלא", 1102),
@@ -197,6 +220,13 @@ class FakeMyBusiness:
                 "\u05e8\u05d9\u05e2\u05e0\u05d5\u05df \u05de\u05d3\u05e8\u05d9\u05db\u05d9 \u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4",
                 500,
             ),
+            {
+                "objectId": "row_heavy_vehicle_theory",
+                "PaymentBtnId": pointer("PaymentBtns", "btn_heavy_vehicle_theory"),
+                "ProductId": None,
+                "ProductDescription": "קורס רכב משא כבד עיוני",
+                "Price": 3305.9,
+            },
         ]
 
     async def _get_object(self, table_name: str, object_id: str, params: dict[str, Any] | None = None) -> dict[str, Any] | None:
@@ -229,7 +259,11 @@ class FakeMyBusiness:
             if "$or" in where:
                 return [self._include_row(row_data) for row_data in self.rows if row_matches_search(self._include_row(row_data), where["$or"])]
             product_ids = {item["objectId"] for item in where.get("ProductId", {}).get("$in", [])}
-            return [self._include_row(row_data) for row_data in self.rows if row_data["ProductId"]["objectId"] in product_ids]
+            return [
+                self._include_row(row_data)
+                for row_data in self.rows
+                if isinstance(row_data.get("ProductId"), dict) and row_data["ProductId"]["objectId"] in product_ids
+            ]
         return []
 
     def _include_category(self, product: dict[str, Any]) -> dict[str, Any]:
@@ -239,9 +273,14 @@ class FakeMyBusiness:
         return {**product, "Category": category or product.get("Category")}
 
     def _include_row(self, row_data: dict[str, Any]) -> dict[str, Any]:
-        product = next(item for item in self.products if item["objectId"] == row_data["ProductId"]["objectId"])
+        product_ref = row_data.get("ProductId") if isinstance(row_data.get("ProductId"), dict) else None
+        product = next((item for item in self.products if product_ref and item["objectId"] == product_ref["objectId"]), None)
         payment_button = self.payment_buttons[row_data["PaymentBtnId"]["objectId"]]
-        return {**row_data, "ProductId": self._include_category(product), "PaymentBtnId": payment_button}
+        return {
+            **row_data,
+            "ProductId": self._include_category(product) if product else None,
+            "PaymentBtnId": payment_button,
+        }
 
 
 def row(row_id: str, button_id: str, product_id: str, description: str, price: int) -> dict[str, Any]:
@@ -392,6 +431,52 @@ def test_get_course_current_price_falls_back_to_matching_product_price() -> None
             "description_for_bot": "\u05e7\u05d5\u05e8\u05e1 \"\u05d4\u05d3\u05e8\u05db\u05d4 \u05d8\u05d5\u05d1\u05d4\" - 80025 - \u05de\u05d7\u05d9\u05e8 2100",
         }
     ]
+
+
+def test_heavy_vehicle_current_price_combines_theory_link_and_practical_product() -> None:
+    service = PaymentLinkService(FakeMyBusiness())
+
+    result = run(service.get_course_current_price(category_name="קורס משא כבד C"))
+
+    assert result["found"] is True
+    assert result["category"]["category_code"] == "80012"
+    assert result["matched_by"] == "heavy_vehicle_category_and_component"
+    assert result["price_source"] == "PaymentBtnsRows.Price + Products.Price fallback"
+    assert [(price["price"], price["name"]) for price in result["prices"]] == [
+        (3305.9, "קורס משא כבד עיוני"),
+        (3846, "חלק מעשי משא כבד"),
+    ]
+
+
+def test_heavy_vehicle_practical_price_uses_exact_product_fallback() -> None:
+    service = PaymentLinkService(FakeMyBusiness())
+
+    result = run(service.get_course_current_price(category_name="חלק מעשי משא כבד"))
+
+    assert result["found"] is True
+    assert result["requires_user_choice"] is False
+    assert result["price_source"] == "Products.Price fallback"
+    assert [(price["price"], price["name"]) for price in result["prices"]] == [(3846, "חלק מעשי משא כבד")]
+
+
+def test_heavy_vehicle_category_id_still_uses_component_aware_prices() -> None:
+    service = PaymentLinkService(FakeMyBusiness())
+
+    result = run(service.get_course_current_price(category_id="cat_heavy_vehicle"))
+
+    assert result["matched_by"] == "heavy_vehicle_category_and_component"
+    assert [price["price"] for price in result["prices"]] == [3305.9, 3846]
+
+
+def test_heavy_vehicle_theory_price_does_not_return_catalog_or_deposit_price() -> None:
+    service = PaymentLinkService(FakeMyBusiness())
+
+    result = run(service.get_course_current_price(category_name="משא כבד עיוני"))
+
+    assert result["found"] is True
+    assert result["requires_user_choice"] is False
+    assert result["price_source"] == "PaymentBtnsRows.Price"
+    assert [price["price"] for price in result["prices"]] == [3305.9]
 
 
 def test_work_at_height_instructor_refresher_uses_specific_category_alias() -> None:
