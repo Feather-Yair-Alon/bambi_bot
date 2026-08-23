@@ -4,7 +4,30 @@ import re
 from typing import Any
 
 from app.services.mybusiness import pointer
-from app.services.payment_links import PaymentLinkService, REQUIRED_CUSTOMER_DETAILS, is_stale_dated_payment_link
+from app.services.payment_links import (
+    PaymentLinkService,
+    REQUIRED_CUSTOMER_DETAILS,
+    is_mismatched_course_payment_link,
+    is_stale_dated_payment_link,
+)
+
+
+def test_heavy_vehicle_category_rejects_crane_payment_button() -> None:
+    link = {
+        "name": "מקדמה קורס עגורן העמסה עצמית",
+        "title": "דף תשלום עגורן העמסה עצמית",
+        "description_for_bot": "מקדמה עבור עגורן",
+        "product": {"product_name": "עבור תשלום מקדמה לקורס"},
+    }
+
+    assert is_mismatched_course_payment_link(
+        link,
+        {"category_code": "80012", "category_name": "משאית משא כבד C"},
+    )
+    assert not is_mismatched_course_payment_link(
+        link,
+        {"category_code": "80009", "category_name": "עגורן העמסה עצמית"},
+    )
 
 
 class FakeMyBusiness:

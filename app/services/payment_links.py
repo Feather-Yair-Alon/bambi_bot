@@ -158,6 +158,8 @@ class PaymentLinkService:
                 continue
 
             link = format_payment_link(payment_btn, row, product)
+            if is_mismatched_course_payment_link(link, category):
+                continue
             if is_stale_dated_payment_link(link):
                 continue
             dedupe_key = (link.get("payment_btn_id"), link.get("product", {}).get("product_id"), str(link.get("row_price")))
@@ -640,6 +642,27 @@ def is_stale_dated_payment_link(link: dict[str, Any], current_year: int | None =
     )
     embedded_years = {int(match) for match in re.findall(r"\b20\d{2}\b", text)}
     return bool(embedded_years and max(embedded_years) < year)
+
+
+def is_mismatched_course_payment_link(link: dict[str, Any], category: dict[str, Any] | None) -> bool:
+    """Reject a payment button that explicitly names a different course family."""
+    category = category or {}
+    category_code = normalize_payment_text(category.get("category_code"))
+    category_name = normalize_payment_text(category.get("category_name"))
+    product = link.get("product") or {}
+    link_text = normalize_payment_text(
+        " ".join(
+            str(value or "")
+            for value in (
+                link.get("name"),
+                link.get("title"),
+                link.get("description_for_bot"),
+                product.get("product_name"),
+            )
+        )
+    )
+    is_heavy_vehicle = category_code == "80012" or "משא כבד" in category_name
+    return bool(is_heavy_vehicle and "עגורן" in link_text)
 
 
 def is_company_forklift_refresher_query(value: Any) -> bool:

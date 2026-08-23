@@ -235,3 +235,15 @@ def test_synthesis_uses_safe_description_when_only_description_is_filtered(monke
 
     assert result.tool_description.startswith("מידע סטטי מאושר על קורס בדיקה")
     assert "מחיר" not in result.tool_description
+
+
+def test_heavy_vehicle_tool_includes_practical_process_without_dynamic_data() -> None:
+    content = Path("app/tools-knowleage/generated/course_heavy_vehicle.txt").read_text(encoding="utf-8")
+
+    assert "מכון צבר" in content
+    assert "20 שיעורי נהיגה מעשיים" in content
+    assert "קריית מלאכי" in content
+    assert "בית ספר אחר לנהיגה" in content
+    assert "3,933" not in content
+    assert "5,500" not in content
+    assert "06.10.26" not in content

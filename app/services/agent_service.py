@@ -270,6 +270,7 @@ Course accuracy rules:
 - For regular work-at-height training, the approved start time is 08:00. Do not state 09:00.
 - For forklift training, approved hours are 08:00-16:00 on weekdays and 07:00-15:00 on Fridays. Language-specific courses may be available in English, Thai, Russian, or Hebrew; verify current dates with MyBusiness and do not claim that Russian is the only additional language.
 - A forklift refresher for an individual is different from a company/group refresher. If the user has not said whether the request is for an individual or a company, ask before quoting a price. English- or Thai-speaking refresher students may join the relevant theory day when a matching language date is available; verify that date before offering it.
+- For heavy-vehicle licence C, always distinguish the theoretical course from the practical driving component. Explain the referral and Tzabar medical-approval process from the course tool, and never imply that registration or payment for one component includes the other. Bambi's practical component is held in Kiryat Malakhi, and the student may instead use another driving school. Prices for each component still require an exact current MyBusiness match.
 - Course dates must come only from find_available_course_dates. Ignore dates embedded in knowledge prose or in a MyBusiness course name when they conflict with start_date.
 """
 

@@ -95,12 +95,13 @@
     {
       "tool_id": "course_heavy_vehicle",
       "display_name": "קורס משא כבד",
-      "description": "מידע על קורס משא כבד להוצאת רישיון C למשאית מעל 12 טון: תנאי קבלה, מבנה ההכשרה העיונית והמעשית, חובת נוכחות, בחינות ותעודה.",
+      "description": "מידע על קורס משא כבד להוצאת רישיון C למשאית מעל 12 טון: קבלת הפניה, בדיקות רפואיות, מבנה ההכשרה העיונית והמעשית, חובת נוכחות, בחינות ותעודה.",
       "file_name": "generated/course_heavy_vehicle.txt",
-      "source_count": 2,
+      "source_count": 3,
       "source_files": [
         "drive:1cBKL1K2dGdjLPxGy7k0_nP3IAaUA3-T9",
-        "drive:1x3cQnDY12mozpq4k6L10Ws4UsWer9tg-"
+        "drive:1x3cQnDY12mozpq4k6L10Ws4UsWer9tg-",
+        "client_update:heavy_vehicle_practical_2026-08-23"
       ],
       "aliases": [
         "משא כבד",
@@ -111,7 +112,7 @@
         "רישיון למשאית מעל 12 טון",
         "רישיון נהיגה למשא כבד"
       ],
-      "source_type": "drive_quote",
+      "source_type": "drive_quote_and_client_update",
       "source_metadata": [
         {
           "file_id": "1cBKL1K2dGdjLPxGy7k0_nP3IAaUA3-T9",
@@ -126,6 +127,13 @@
           "folder_path": "",
           "modified_time": "2026-06-16T06:20:03.000Z",
           "url": "https://drive.google.com/file/d/1x3cQnDY12mozpq4k6L10Ws4UsWer9tg-/view?usp=drivesdk"
+        },
+        {
+          "file_id": "heavy_vehicle_practical_2026-08-23",
+          "title": "השלמת מידע למשא כבד - תהליך וחלק מעשי",
+          "folder_path": "client_update",
+          "modified_time": "2026-08-23T00:00:00+03:00",
+          "url": null
         }
       ]
     },
