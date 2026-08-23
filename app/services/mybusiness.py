@@ -424,6 +424,7 @@ class MyBusinessService:
         allow_tentative_courses: bool = False,
         dry_run: bool = False,
         high_work_subjects: str | list[str] | None = None,
+        work_at_height_training_type: str | None = None,
     ) -> dict[str, Any]:
         requested_payment_status = (payment_status or "UNPAID").strip().upper()
         if requested_payment_status not in PAYMENT_STATUS_IDS:
@@ -444,6 +445,7 @@ class MyBusinessService:
                 allow_tentative_courses=allow_tentative_courses,
                 dry_run=dry_run,
                 high_work_subjects=high_work_subjects,
+                work_at_height_training_type=work_at_height_training_type,
             )
 
     async def _register_customer_to_course_locked(
@@ -458,6 +460,7 @@ class MyBusinessService:
         allow_tentative_courses: bool,
         dry_run: bool,
         high_work_subjects: str | list[str] | None,
+        work_at_height_training_type: str | None,
     ) -> dict[str, Any]:
         eligibility = await self.check_customer_registration_eligibility(
             account_id=account_id,
@@ -506,6 +509,10 @@ class MyBusinessService:
         account_update_payload: dict[str, Any] | None = None
         previous_high_work_subjects: Any = None
         if is_work_at_height_course(latest_course):
+            normalized_training_type = normalize_work_at_height_training_type(work_at_height_training_type)
+            is_refresher = normalized_training_type == "REFRESHER" or (
+                normalized_training_type is None and is_work_at_height_refresher(latest_course)
+            )
             if not normalized_high_work_subjects:
                 eligibility = {**eligibility, "can_register": False, "blocking_reasons": ["HIGH_WORK_SUBJECTS_REQUIRED"]}
                 return {
@@ -515,7 +522,7 @@ class MyBusinessService:
                     "required_high_work_subjects": list(WORK_AT_HEIGHT_SUBJECTS.values()),
                 }
             selected_subjects = [item.strip() for item in normalized_high_work_subjects.split(",") if item.strip()]
-            if len(selected_subjects) > MAX_WORK_AT_HEIGHT_SUBJECTS_PER_DAY:
+            if len(selected_subjects) > MAX_WORK_AT_HEIGHT_SUBJECTS_PER_DAY and not is_refresher:
                 eligibility = {**eligibility, "can_register": False, "blocking_reasons": ["TOO_MANY_HIGH_WORK_SUBJECTS"]}
                 return {
                     "created": False,
@@ -894,6 +901,22 @@ def is_work_at_height_course(row: dict[str, Any]) -> bool:
     code = normalize_text(category.get("Code"))
     course_name = normalize_text(row.get("Name"))
     return code == WORK_AT_HEIGHT_CATEGORY_CODE or name == WORK_AT_HEIGHT_CATEGORY_NAME or WORK_AT_HEIGHT_CATEGORY_NAME in course_name
+
+
+def is_work_at_height_refresher(row: dict[str, Any]) -> bool:
+    category = row.get("ProductCategory") if isinstance(row.get("ProductCategory"), dict) else {}
+    product = row.get("ProductId") if isinstance(row.get("ProductId"), dict) else {}
+    text = normalize_text(" ".join(str(value or "") for value in (row.get("Name"), category.get("Name"), product.get("Name"))))
+    return is_work_at_height_course(row) and any(marker in text for marker in ("רענון", "ריענון"))
+
+
+def normalize_work_at_height_training_type(value: Any) -> str | None:
+    text = normalize_text(value).replace("ריענון", "רענון")
+    if text in {"refresher", "refresh", "רענון"}:
+        return "REFRESHER"
+    if text in {"initial", "first", "ראשוני", "ראשונית"}:
+        return "INITIAL"
+    return None
 
 
 def is_forklift_course(row: dict[str, Any]) -> bool:

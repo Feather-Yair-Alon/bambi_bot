@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from app.services.agent_service import AgentService
 from scripts.update_knowledge_from_drive_quotes import (
     DocumentKnowledgeDecision,
     DriveFileRecord,
@@ -249,3 +250,14 @@ def test_heavy_vehicle_tool_includes_practical_process_without_dynamic_data() ->
     assert "3,933" not in content
     assert "5,500" not in content
     assert "06.10.26" not in content
+
+
+def test_work_at_height_refresher_uses_previous_certificate_and_allows_seven_topics() -> None:
+    content = Path("app/tools-knowleage/generated/course_work_at_height.txt").read_text(encoding="utf-8")
+    instructions = AgentService.__new__(AgentService)._work_at_height_registration_instructions()
+
+    assert "כל שבעת הנושאים" in content
+    assert "בתעודה הקודמת" in content
+    assert "אין להחיל על ריענון את מגבלת ארבעת הנושאים" in content
+    assert "All seven topics may be refreshed in one day" in instructions
+    assert "must exactly follow the topics listed on the student's previous certificate" in instructions

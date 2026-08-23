@@ -252,11 +252,14 @@ If the tool output does not specify VAT status, assume the price is excluding VA
         return """
 
 Work-at-height registration:
-For a regular work-at-height course / הדרכת עבודה בגובה, before sending the user to final registration or before calling register_customer_to_course, ask which work-at-height topics the student needs.
+First distinguish between an initial work-at-height course and a work-at-height refresher. If the user did not specify which one, ask one short clarification question before registration.
+For an initial work-at-height course / הדרכת עבודה בגובה ראשונית, before sending the user to final registration or before calling register_customer_to_course, ask which work-at-height topics the student needs.
 The seven allowed topics are exactly: סולמות, גגות, קונסטרוקציה, פיגומים נייחים, בימות הרמה מתרוממות ופיגומים ממוכנים, סלי הרמה, מקום מוקף (כולל מכליות).
-Always show all seven topics when asking the user to choose. By law, a student may complete no more than four topics in one training day. If more than four are needed, explain that another day is required and do not send more than four topics in one registration call.
-The user may choose one to four topics per day. If the user is unsure, ask one short clarification question about the type of work they perform.
+Always show all seven topics when asking the user to choose. For an initial course, a student may complete no more than four topics in one training day. If more than four initial-course topics are needed, explain that another day is required and do not send more than four topics in one registration call.
+For a work-at-height refresher / ריענון עבודה בגובה, the refresher topics must exactly follow the topics listed on the student's previous certificate. Ask the user which topics appear on that certificate. All seven topics may be refreshed in one day if all seven appear on the previous certificate. Do not apply the four-topic initial-course limit to a refresher, and do not add a topic that is absent from the previous certificate.
+If the user is unsure, ask one short clarification question about the previous certificate for a refresher, or about the type of work they perform for an initial course.
 When calling register_customer_to_course for a work-at-height course, pass the chosen topics in high_work_subjects as a comma-separated Hebrew string.
+Also pass work_at_height_training_type=INITIAL for an initial course or work_at_height_training_type=REFRESHER for a refresher. MyBusiness course names do not reliably distinguish the two, so never omit this field after the user clarified the training type.
 Do not invent a topic outside the allowed list. If no topic was selected, do not register the user; ask for the missing topic selection.
 """
 
@@ -758,10 +761,11 @@ If the tool returns FORKLIFT_PRACTICAL_DATES_FULL or FORKLIFT_PRACTICAL_DATES_NO
             allow_tentative_courses: bool = False,
             dry_run: bool = True,
             high_work_subjects: str | None = None,
+            work_at_height_training_type: str | None = None,
         ) -> dict[str, Any]:
             """Register an existing MyBusiness customer to a course after full eligibility checks. Defaults to dry_run.
 
-            For regular work-at-height courses, high_work_subjects is required and must contain one to four selected topics from:
+            For initial work-at-height courses, high_work_subjects is required and must contain one to four selected topics. For a refresher, it may contain up to all seven topics, but only topics listed on the student's previous certificate. Set work_at_height_training_type to INITIAL or REFRESHER. Allowed topics:
             סולמות, גגות, קונסטרוקציה, פיגומים נייחים, בימות הרמה מתרוממות ופיגומים ממוכנים, סלי הרמה, מקום מוקף (כולל מכליות).
             """
             try:
@@ -773,6 +777,7 @@ If the tool returns FORKLIFT_PRACTICAL_DATES_FULL or FORKLIFT_PRACTICAL_DATES_NO
                     allow_tentative_courses=allow_tentative_courses,
                     dry_run=dry_run,
                     high_work_subjects=high_work_subjects,
+                    work_at_height_training_type=work_at_height_training_type,
                 )
             except Exception as exc:  # noqa: BLE001 - tool should return structured failure to the agent.
                 payload = {

@@ -468,7 +468,7 @@
     {
       "tool_id": "course_work_at_height",
       "display_name": "קורס עבודה בגובה",
-      "description": "מידע סטטי מאושר על קורס עבודה בגובה, כולל תנאי קבלה, מבנה, משך, תכנים, מבחנים ותעודה.",
+      "description": "מידע סטטי מאושר על קורס וריענון עבודה בגובה, כולל תנאי קבלה, שבעת נושאי ההסמכה, ההבדל בין הכשרה ראשונית לריענון, מבנה, משך, מבחנים ותעודה.",
       "file_name": "generated/course_work_at_height.txt",
       "source_count": 1,
       "source_files": [
@@ -481,7 +481,7 @@
         "עבודות בגובה",
         "רענון עבודה בגובה"
       ],
-      "source_type": "drive_quote",
+      "source_type": "drive_quote_and_client_update",
       "source_metadata": [
         {
           "file_id": "13VihWiTftXqq-Qx__mWaAENRr4nYzD4n",

@@ -554,6 +554,36 @@ def test_work_at_height_registration_blocks_more_than_four_topics_per_day() -> N
     assert len(result["selected_high_work_subjects"]) == 5
 
 
+def test_work_at_height_refresher_allows_all_seven_previous_certificate_topics() -> None:
+    service = FakeMyBusinessService(
+        {
+            ("Accounts", "account1"): {"objectId": "account1", "Name": "Test Customer", "Delete": False},
+            ("Courses", "height-refresh1"): open_work_at_height_course("height-refresh1"),
+            ("Sales", "sale1"): {"objectId": "sale1", "AccountId": {"objectId": "account1"}},
+        }
+    )
+
+    result = run_async(
+        service.register_customer_to_course(
+            account_id="account1",
+            course_id="height-refresh1",
+            sale_id="sale1",
+            payment_status="PAID",
+            dry_run=True,
+            high_work_subjects=(
+                "סולמות, גגות, קונסטרוקציה, פיגומים נייחים, בימות הרמה, "
+                "סלי הרמה, מקום מוקף"
+            ),
+            work_at_height_training_type="REFRESHER",
+        )
+    )
+
+    assert result["eligibility"]["can_register"] is True
+    assert result["dry_run"] is True
+    assert len(result["would_update_account_payload"]["HighWorkSubjects"].split(",")) == 7
+    assert "TOO_MANY_HIGH_WORK_SUBJECTS" not in result["eligibility"]["blocking_reasons"]
+
+
 def test_forklift_practical_assignment_uses_course_end_date_for_empty_second_slot() -> None:
     course = open_forklift_course()
     course["StartDate"] = date_pointer("2099-08-17T09:00:00.000Z")
