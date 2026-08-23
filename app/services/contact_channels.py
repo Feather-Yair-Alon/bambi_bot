@@ -15,29 +15,31 @@ class ContactChannel:
 
 CONTACT_CHANNELS = [
     ContactChannel(
-        owner="נציג/ת ימי עיון וקורסי מדריכים",
+        owner="טלי - מנהלת מחלקת בטיחות",
         phone="052-702-3884",
-        family="ימי עיון קצב\"ט וממונה, אבטחת מטענים וקורסי מדריכים",
+        family="ימי עיון לקצב\"טים ולממונים, טכוגרף, נאמני בטיחות, הדרכות בטיחות ואבטחת מטענים",
         keywords=(
             "קצין בטיחות",
             "קצבט",
             "ממונה בטיחות",
             "ימי עיון",
             "יום עיון",
+            "טכוגרף",
+            "נאמני בטיחות",
+            "נאמן בטיחות",
+            "הדרכת בטיחות",
+            "הדרכות בטיחות",
+            "קורס בטיחות",
             "אבטחת מטענים",
-            "מדריך",
-            "מדריכים",
             "הדרכה טובה",
             "חקירת תאונות",
         ),
     ),
     ContactChannel(
-        owner="נציג/ת עבודה בגובה ועגורנים",
+        owner="חן - רכזת תחום מנופים",
         phone="054-904-7872",
-        family="עבודה בגובה ועגורנים",
+        family="עגורני העמסה עצמית, עגורני גשר ואתתים",
         keywords=(
-            "עבודה בגובה",
-            "גובה",
             "עגורן",
             "מנוף",
             "אתת",
@@ -49,7 +51,20 @@ CONTACT_CHANNELS = [
         ),
     ),
     ContactChannel(
-        owner="נציג/ת נהיגה ורכב כבד",
+        owner="מיקה - רכזת תחום עבודה בגובה",
+        phone="054-940-5419",
+        family="קורסי עבודה בגובה, רענוני מדריכים וקורסי מדריכים",
+        keywords=(
+            "עבודה בגובה",
+            "גובה",
+            "מדריך עבודה בגובה",
+            "מדריכי עבודה בגובה",
+            "רענון מדריך עבודה בגובה",
+            "רענון מדריכי עבודה בגובה",
+        ),
+    ),
+    ContactChannel(
+        owner="ירין - רכזת טרקטורים, מכונה ניידת ומשא כבד",
         phone="054-904-7652",
         family="טרקטור, מכונה ניידת ומשא כבד",
         keywords=(
@@ -64,9 +79,9 @@ CONTACT_CHANNELS = [
         ),
     ),
     ContactChannel(
-        owner="נציג/ת חומ\"ס ורכב ציבורי",
+        owner="מרינה - מנהלת מחלקת תחבורה",
         phone="054-580-6131",
-        family="הובלת חומ\"ס, רישיון מוביל, מדריכי מלגזות ורכב ציבורי",
+        family="קורסי חומ\"ס, רישיון מוביל, הוראת נהיגה ורכב ציבורי",
         keywords=(
             "חומס",
             "חומ\"ס",
@@ -77,8 +92,10 @@ CONTACT_CHANNELS = [
             "רישיון מוביל",
             "רשיון מוביל",
             "מוביל",
-            "מדריך מלגזה",
-            "מדריכי מלגזה",
+            "הוראת נהיגה",
+            "מורה נהיגה",
+            "מורי נהיגה",
+            "מדריך נהיגה",
             "רכב ציבורי",
             "אוטובוס",
             "d1",
@@ -87,7 +104,7 @@ CONTACT_CHANNELS = [
         ),
     ),
     ContactChannel(
-        owner="נציג/ת מלגזות",
+        owner="אליאור - רכזת מלגזה ורענוני מלגזה",
         phone="054-968-8028",
         family="מלגזות ורענוני מלגזה",
         keywords=(
@@ -102,7 +119,7 @@ CONTACT_CHANNELS = [
 
 OFFICE_CONTACT = {
     "owner": "משרד",
-    "phone": "08-859-2779",
+    "phone": "074-70-87-030",
     "family": "פרטי משרד כלליים",
 }
 
@@ -125,10 +142,6 @@ class ContactChannelService:
             for channel in CONTACT_CHANNELS
             if any(normalize_contact_query(keyword) in query for keyword in channel.keywords)
         ]
-
-        # Instructor forklift belongs to the instructor/contact family, not the general forklift family.
-        if any(term in query for term in ("מדריך מלגזה", "מדריכי מלגזה")):
-            matches = [channel for channel in matches if channel.phone == "054-580-6131"]
 
         unique = dedupe_channels(matches)
         if len(unique) == 1:
