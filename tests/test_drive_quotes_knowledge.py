@@ -244,6 +244,8 @@ def test_heavy_vehicle_tool_includes_practical_process_without_dynamic_data() ->
     assert "20 שיעורי נהיגה מעשיים" in content
     assert "קריית מלאכי" in content
     assert "בית ספר אחר לנהיגה" in content
+    assert "80% לפחות" in content
+    assert "חובת נוכחות בכל השיעורים" not in content
     assert "3,933" not in content
     assert "5,500" not in content
     assert "06.10.26" not in content
