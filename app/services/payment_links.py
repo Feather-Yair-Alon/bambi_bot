@@ -16,6 +16,7 @@ PAYMENT_INTENTS = {"FULL", "DEPOSIT", "REFRESHER", "FRIDAY", "THEORY", "PRACTICA
 WORK_AT_HEIGHT_CATEGORY_CODE = "80015"
 WORK_AT_HEIGHT_CATEGORY_NAME = "\u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4"
 HEAVY_VEHICLE_CATEGORY_CODE = "80012"
+PUBLIC_TRANSPORT_CATEGORY_CODE = "80013"
 HEAVY_VEHICLE_PRACTICAL_PAYMENT_GUIDANCE = (
     "No online payment link is provided for the heavy-vehicle practical component. "
     "Payment is usually made directly to the driving instructor. State the current price and offer the relevant representative."
@@ -60,6 +61,10 @@ class PaymentLinkService:
         if heavy_vehicle:
             return await self._get_heavy_vehicle_current_price(heavy_vehicle, category_name)
 
+        public_transport = await self._resolve_public_transport_request(category_id, category_code, category_name)
+        if public_transport:
+            return await self._get_public_transport_current_price(public_transport)
+
         payload = await self.get_course_payment_links(
             category_id=category_id,
             category_code=category_code,
@@ -88,6 +93,41 @@ class PaymentLinkService:
             "restricted_links_summary": payload.get("restricted_links_summary") or [],
             "reason": None if prices else payload.get("reason") or "No current payment price was found.",
             "price_source": price_source,
+        }
+
+    async def _resolve_public_transport_request(
+        self,
+        category_id: str | None,
+        category_code: str | None,
+        category_name: str | None,
+    ) -> dict[str, Any] | None:
+        if normalize_payment_text(category_code) == PUBLIC_TRANSPORT_CATEGORY_CODE or is_public_transport_text(category_name):
+            result = await self._resolve_category(category_id, PUBLIC_TRANSPORT_CATEGORY_CODE, None)
+            return result.get("category") if result.get("found") else None
+        return None
+
+    async def _get_public_transport_current_price(self, category: dict[str, Any]) -> dict[str, Any]:
+        products = await self._get_products_for_category(category["category_id"])
+        canonical_products = [
+            product
+            for product in products
+            if product.get("IsActive") is not False and is_public_transport_course_product(product)
+        ]
+        prices = [
+            format_product_price_option(product)
+            for product in canonical_products
+            if product.get("Price") is not None
+        ]
+        return {
+            "found": bool(prices),
+            "requires_user_choice": len(prices) > 1,
+            "requires_representative": not prices,
+            "category": category,
+            "matched_by": "public_transport_canonical_product",
+            "prices": prices,
+            "restricted_links_summary": [],
+            "reason": None if prices else "No canonical public-transport course price was found.",
+            "price_source": "Products.Price fallback",
         }
 
     async def _resolve_heavy_vehicle_request(
@@ -758,6 +798,16 @@ def is_mismatched_course_payment_link(link: dict[str, Any], category: dict[str, 
 
 def is_heavy_vehicle_text(value: Any) -> bool:
     return resolve_course_category_code(value) == HEAVY_VEHICLE_CATEGORY_CODE
+
+
+def is_public_transport_text(value: Any) -> bool:
+    return resolve_course_category_code(value) == PUBLIC_TRANSPORT_CATEGORY_CODE
+
+
+def is_public_transport_course_product(product: dict[str, Any]) -> bool:
+    text = normalize_payment_text(product.get("Name"))
+    excluded = ("שונות", "השלמת", "מקדמה", "דמי רישום", "ספר", "אגרה")
+    return "רכב ציבורי" in text and "קורס" in text and not any(marker in text for marker in excluded)
 
 
 def heavy_vehicle_price_component(value: Any) -> str | None:

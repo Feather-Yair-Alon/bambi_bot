@@ -23,6 +23,12 @@ def test_heavy_vehicle_aliases_use_mybusiness_category() -> None:
     assert KNOWLEDGE_TOOL_CATEGORY_CODES["course_heavy_vehicle"] == "80012"
 
 
+def test_public_transport_aliases_use_mybusiness_category() -> None:
+    assert resolve_course_category_code("קורס רכב ציבורי") == "80013"
+    assert resolve_course_category_code("רישיון D1") == "80013"
+    assert KNOWLEDGE_TOOL_CATEGORY_CODES["course_public_transport_vehicle"] == "80013"
+
+
 def test_thai_language_aliases_match_course_names() -> None:
     assert detect_course_language("קורס מלגזה בתאית") == "תאית"
     assert text_matches_language("קורס מלגזה לתאילנדים", "תאית")

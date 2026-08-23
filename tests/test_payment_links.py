@@ -48,6 +48,7 @@ class FakeMyBusiness:
             {"objectId": "cat_work_at_height", "Name": "\u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4", "Code": "80015"},
             {"objectId": "cat_work_at_height_instructor_refresh", "Name": "\u05e8\u05e2\u05e0\u05d5\u05df \u05de\u05d3\u05e8\u05d9\u05da \u05d2\u05d5\u05d1\u05d4", "Code": "80018"},
             {"objectId": "cat_heavy_vehicle", "Name": "משאית משא כבד C", "Code": "80012"},
+            {"objectId": "cat_public_transport", "Name": "קורס רכב ציבורי", "Code": "80013"},
         ]
         self.products = [
             {
@@ -162,6 +163,22 @@ class FakeMyBusiness:
                 "IsActive": True,
                 "Category": pointer("ProductCategories", "cat_heavy_vehicle"),
             },
+            {
+                "objectId": "prod_public_transport_course",
+                "Name": "עבור קורס רכב ציבורי -",
+                "CatalogNumber": "80013",
+                "Price": 3729,
+                "IsActive": True,
+                "Category": pointer("ProductCategories", "cat_public_transport"),
+            },
+            {
+                "objectId": "prod_public_transport_misc",
+                "Name": "רכב ציבורי -שונות",
+                "CatalogNumber": "80013",
+                "Price": 100,
+                "IsActive": True,
+                "Category": pointer("ProductCategories", "cat_public_transport"),
+            },
         ]
         self.payment_buttons = {
             "btn_forklift_full": {"objectId": "btn_forklift_full", "Name": "קורס מלגזה", "Title": "קורס מלגזה", "Active": True},
@@ -201,6 +218,12 @@ class FakeMyBusiness:
                 "Title": "דף תשלום קורס משא כבד עיוני",
                 "Active": True,
             },
+            "btn_public_transport_misc": {
+                "objectId": "btn_public_transport_misc",
+                "Name": "דף תשלום רכב ציבורי- שונות",
+                "Title": "",
+                "Active": True,
+            },
         }
         self.rows = [
             row("row_f1", "btn_forklift_full", "prod_forklift", "קורס מלגזה מלא", 1102),
@@ -227,6 +250,13 @@ class FakeMyBusiness:
                 "ProductDescription": "קורס רכב משא כבד עיוני",
                 "Price": 3305.9,
             },
+            row(
+                "row_public_transport_misc",
+                "btn_public_transport_misc",
+                "prod_public_transport_misc",
+                "רכב ציבורי -שונות",
+                1000,
+            ),
         ]
 
     async def _get_object(self, table_name: str, object_id: str, params: dict[str, Any] | None = None) -> dict[str, Any] | None:
@@ -477,6 +507,20 @@ def test_heavy_vehicle_theory_price_does_not_return_catalog_or_deposit_price() -
     assert result["requires_user_choice"] is False
     assert result["price_source"] == "PaymentBtnsRows.Price"
     assert [price["price"] for price in result["prices"]] == [3305.9]
+
+
+def test_public_transport_price_ignores_miscellaneous_payment_amount() -> None:
+    service = PaymentLinkService(FakeMyBusiness())
+
+    result = run(service.get_course_current_price(category_name="קורס רכב ציבורי"))
+
+    assert result["found"] is True
+    assert result["category"]["category_code"] == "80013"
+    assert result["matched_by"] == "public_transport_canonical_product"
+    assert result["price_source"] == "Products.Price fallback"
+    assert [(price["price"], price["name"]) for price in result["prices"]] == [
+        (3729, "עבור קורס רכב ציבורי -")
+    ]
 
 
 def test_heavy_vehicle_practical_never_returns_online_payment_link() -> None:
