@@ -16,6 +16,10 @@ PAYMENT_INTENTS = {"FULL", "DEPOSIT", "REFRESHER", "FRIDAY", "THEORY", "PRACTICA
 WORK_AT_HEIGHT_CATEGORY_CODE = "80015"
 WORK_AT_HEIGHT_CATEGORY_NAME = "\u05e2\u05d1\u05d5\u05d3\u05d4 \u05d1\u05d2\u05d5\u05d1\u05d4"
 HEAVY_VEHICLE_CATEGORY_CODE = "80012"
+HEAVY_VEHICLE_PRACTICAL_PAYMENT_GUIDANCE = (
+    "No online payment link is provided for the heavy-vehicle practical component. "
+    "Payment is usually made directly to the driving instructor. State the current price and offer the relevant representative."
+)
 DISCOUNT_KEYWORDS = ("הנחה", "אחוז הנחה", "10 אחוז", "15 אחוז", "discount")
 PAYMENT_SEARCH_STOPWORDS = {
     "course",
@@ -128,11 +132,16 @@ class PaymentLinkService:
 
         practical_prices = []
         if component != "theory":
-            practical_prices = [
-                format_product_price_option(product)
-                for product in active_products
-                if heavy_vehicle_product_component(product) == "practical" and product.get("Price") is not None
-            ]
+            for product in active_products:
+                if heavy_vehicle_product_component(product) != "practical" or product.get("Price") is None:
+                    continue
+                option = format_product_price_option(product)
+                option["payment_link_available"] = False
+                option["payment_guidance"] = HEAVY_VEHICLE_PRACTICAL_PAYMENT_GUIDANCE
+                practical_prices.append(option)
+
+        for price in theory_prices:
+            price["payment_link_available"] = bool(price.get("payment_btn_id"))
 
         prices = dedupe_product_price_options([*theory_prices, *practical_prices])
         sources = []
@@ -181,12 +190,20 @@ class PaymentLinkService:
             }
 
         intent = normalize_payment_intent(payment_intent)
+        if (
+            normalize_payment_text(category_code) == HEAVY_VEHICLE_CATEGORY_CODE or is_heavy_vehicle_text(category_name)
+        ) and (intent == "PRACTICAL" or heavy_vehicle_price_component(category_name) == "practical"):
+            category_result = await self._resolve_category(category_id, HEAVY_VEHICLE_CATEGORY_CODE, None)
+            return heavy_vehicle_practical_no_link_payload(category_result.get("category"))
+
         product_result = await self._resolve_products(category_id, category_code, category_name, product_id)
         if not product_result.get("found"):
             return product_result
 
         category = product_result.get("category")
         products = product_result.get("products") or []
+        if len(products) == 1 and heavy_vehicle_product_component(products[0]) == "practical":
+            return heavy_vehicle_practical_no_link_payload(category)
         if not products:
             return {
                 "found": False,
@@ -293,7 +310,7 @@ class PaymentLinkService:
             if not product:
                 return not_found("Product was not found.")
             category = map_category_ref(product.get("Category"))
-            return {"found": True, "category": category, "products": [product]}
+            return {"found": True, "matched_by": "product_id", "category": category, "products": [product]}
 
         if is_company_forklift_refresher_query(category_name) and not category_id and not category_code:
             category_result = await self._resolve_category(None, "80003", None)
@@ -780,6 +797,20 @@ def is_heavy_vehicle_theory_link(link: dict[str, Any]) -> bool:
     is_heavy = any(marker in text for marker in ("משא כבד", "משאית משא כבד", "רכב משא כבד"))
     excluded = ("מקדמה", "דמי רישום", "ספר", "מעשי", "עגורן")
     return bool(is_heavy and "עיוני" in text and not any(marker in text for marker in excluded))
+
+
+def heavy_vehicle_practical_no_link_payload(category: dict[str, Any] | None) -> dict[str, Any]:
+    return {
+        "found": False,
+        "requires_user_choice": False,
+        "requires_representative": True,
+        "category": category,
+        "payment_links": [],
+        "restricted_links_summary": [],
+        "required_customer_details": REQUIRED_CUSTOMER_DETAILS,
+        "reason": "Heavy-vehicle practical driving is paid directly to the driving instructor; no online payment link is available.",
+        "payment_guidance": HEAVY_VEHICLE_PRACTICAL_PAYMENT_GUIDANCE,
+    }
 
 
 def is_company_forklift_refresher_query(value: Any) -> bool:

@@ -21,6 +21,8 @@ def safe_current_price_payload(payload: dict[str, Any]) -> dict[str, Any]:
                 "product_name": item.get("product_name"),
                 "catalog_number": item.get("catalog_number"),
                 "description_for_bot": item.get("description_for_bot"),
+                "payment_link_available": item.get("payment_link_available"),
+                "payment_guidance": item.get("payment_guidance"),
             }
         )
 
@@ -64,11 +66,15 @@ def build_price_content_section(price_payload: dict[str, Any]) -> str:
 
     if len(prices) == 1:
         lines.append(f"המחיר המעודכן הוא {_format_price(prices[0].get('price'))}.")
+        if prices[0].get("payment_guidance"):
+            lines.append(str(prices[0]["payment_guidance"]))
     else:
         lines.append("נמצאו כמה אפשרויות מחיר. אם אין התאמה חד-משמעית לפי שם/תיאור האפשרות, שאל שאלת הבהרה קצרה.")
         for index, item in enumerate(prices, start=1):
             label = item.get("description_for_bot") or item.get("name") or item.get("title") or item.get("product_name") or "אפשרות מחיר"
             lines.append(f"{index}. {label}: {_format_price(item.get('price'))}")
+            if item.get("payment_guidance"):
+                lines.append(str(item["payment_guidance"]))
 
     return "\n".join(lines) + "\n"
 

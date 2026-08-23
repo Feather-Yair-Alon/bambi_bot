@@ -479,6 +479,24 @@ def test_heavy_vehicle_theory_price_does_not_return_catalog_or_deposit_price() -
     assert [price["price"] for price in result["prices"]] == [3305.9]
 
 
+def test_heavy_vehicle_practical_never_returns_online_payment_link() -> None:
+    service = PaymentLinkService(FakeMyBusiness())
+
+    by_name = run(
+        service.get_course_payment_links(
+            category_name="חלק מעשי משא כבד",
+            payment_intent="PRACTICAL",
+        )
+    )
+    by_product = run(service.get_course_payment_links(product_id="prod_heavy_vehicle_practical"))
+
+    for result in (by_name, by_product):
+        assert result["found"] is False
+        assert result["requires_representative"] is True
+        assert result["payment_links"] == []
+        assert "directly to the driving instructor" in result["payment_guidance"]
+
+
 def test_work_at_height_instructor_refresher_uses_specific_category_alias() -> None:
     service = PaymentLinkService(FakeMyBusiness())
 

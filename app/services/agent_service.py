@@ -271,6 +271,7 @@ Course accuracy rules:
 - For forklift training, approved hours are 08:00-16:00 on weekdays and 07:00-15:00 on Fridays. Language-specific courses may be available in English, Thai, Russian, or Hebrew; verify current dates with MyBusiness and do not claim that Russian is the only additional language.
 - A forklift refresher for an individual is different from a company/group refresher. If the user has not said whether the request is for an individual or a company, ask before quoting a price. English- or Thai-speaking refresher students may join the relevant theory day when a matching language date is available; verify that date before offering it.
 - For heavy-vehicle licence C, always distinguish the theoretical course from the practical driving component. Explain the referral and Tzabar medical-approval process from the course tool, and never imply that registration or payment for one component includes the other. Bambi's practical component is held in Kiryat Malakhi, and the student may instead use another driving school. Prices for each component still require an exact current MyBusiness match.
+- The heavy-vehicle practical component never receives an online payment link from the bot. State its approved current price, explain that payment is usually made directly to the driving instructor, and offer help from the relevant course representative. Never substitute the theoretical-course, deposit, or registration-fee link. If the user wants representative details, call get_course_contact_channel for the heavy-vehicle course.
 - Course dates must come only from find_available_course_dates. Ignore dates embedded in knowledge prose or in a MyBusiness course name when they conflict with start_date.
 """
 
@@ -482,6 +483,7 @@ If the tool returns FORKLIFT_PRACTICAL_DATES_FULL or FORKLIFT_PRACTICAL_DATES_NO
 אם הכלי מחזיר requires_representative=true או restricted_links_summary בלבד, אל תציג שום לינק תשלום והעבר לנציג.
 לעולם אל תציג או תציע לינקים של הנחה. אם לקוח מבקש הנחה, הסבר שהנחות דורשות טיפול נציג.
 אם אין לינק תשלום לקורס או שיש התאמה לא חד-משמעית שלא ניתן לברר עם הלקוח, אל תמציא לינק ואל תשתמש בלינק של קורס אחר - העבר לנציג.
+חריג קבוע למשא כבד מעשי: אין לשלוח לינק תשלום לחלק המעשי. הצג את המחיר העדכני מכלי המחיר, הסבר שהתשלום מתבצע בדרך כלל ישירות למורה הנהיגה, והצע להעביר לנציג הקורס באמצעות get_course_contact_channel. אין לשלוח במקום זאת לינק של הקורס העיוני, מקדמה או דמי רישום, ואין לנסות להשלים רישום אוטומטי לחלק המעשי.
 
 4. לאחר תשלום:
 בקש מהלקוח לעדכן כשהתשלום הסתיים. אם הלקוח אומר שהוא שילם, חובה לבדוק מול MyBusiness לפני רישום.

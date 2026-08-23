@@ -21,6 +21,8 @@ def test_safe_current_price_payload_removes_payment_button_ids() -> None:
                     "payment_btn_id": "internal-id",
                     "name": "תשלום קורס",
                     "product_name": "קורס בדיקה",
+                    "payment_link_available": False,
+                    "payment_guidance": "Pay directly to the instructor.",
                 }
             ],
             "price_source": "PaymentBtnsRows.Price",
@@ -30,6 +32,8 @@ def test_safe_current_price_payload_removes_payment_button_ids() -> None:
     assert payload["found"] is True
     assert payload["prices"][0]["price"] == 1000
     assert "payment_btn_id" not in payload["prices"][0]
+    assert payload["prices"][0]["payment_link_available"] is False
+    assert payload["prices"][0]["payment_guidance"] == "Pay directly to the instructor."
     assert payload["vat_note"] == "Prices are excluding VAT unless explicitly marked as VAT included."
 
 
@@ -53,3 +57,23 @@ def test_build_price_content_section_missing_price_blocks_old_content_prices() -
 
     assert "לא נמצא מחיר עדכני מאושר" in section
     assert "אין לציין מחיר מתוך גוף תוכן הקורס" in section
+
+
+def test_build_price_content_section_includes_payment_guidance() -> None:
+    section = build_price_content_section(
+        {
+            "found": True,
+            "price_source": "Products.Price fallback",
+            "prices": [
+                {
+                    "price": 4661,
+                    "name": "חלק מעשי משא כבד",
+                    "payment_link_available": False,
+                    "payment_guidance": "Pay directly to the driving instructor and offer a representative.",
+                }
+            ],
+        }
+    )
+
+    assert "4,661" in section
+    assert "Pay directly to the driving instructor" in section
