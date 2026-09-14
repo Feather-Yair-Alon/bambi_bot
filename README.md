@@ -87,6 +87,18 @@ $env:ANTHROPIC_API_KEY="..."
 python scripts\benchmark_anthropic.py
 ```
 
+## AWS WhatsApp production runtime
+
+The production runtime is serverless and is defined in `infra/production.yaml`. It uses API Gateway, two Lambda functions, SQS with a dead-letter queue, DynamoDB with point-in-time recovery, Secrets Manager, CloudWatch logs, and a dead-letter alarm.
+
+Deploy or update it from PowerShell after authenticating the AWS CLI:
+
+```powershell
+.\infra\deploy-production.ps1 -Region eu-central-1
+```
+
+The runtime secret `bambi-bot/production/runtime` must contain the Anthropic and MyBusiness credentials. Keep the four `meta_*` values empty until the Meta test number is ready. Configure Meta with the `WebhookUrl` stack output only after setting `meta_verify_token`, `meta_app_secret`, `meta_access_token`, and `meta_phone_number_id`.
+
 ## Useful endpoints
 
 - `GET /health`

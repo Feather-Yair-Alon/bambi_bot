@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     chat_rate_limit_per_minute: int = Field(default=20, alias="CHAT_RATE_LIMIT_PER_MINUTE")
     chat_message_max_length: int = Field(default=4000, alias="CHAT_MESSAGE_MAX_LENGTH")
     chat_history_retention_days: int = Field(default=7, alias="CHAT_HISTORY_RETENTION_DAYS")
+    storage_backend: str = Field(default="sqlite", alias="STORAGE_BACKEND")
+    dynamodb_table_name: str = Field(default="", alias="DYNAMODB_TABLE_NAME")
+    aws_region: str = Field(default="eu-central-1", alias="AWS_REGION")
 
     data_dir: Path = Field(default=Path("./data"), alias="DATA_DIR")
     sqlite_path: Path = Field(default=Path("./data/bambi.db"), alias="SQLITE_PATH")
@@ -64,13 +67,20 @@ class Settings(BaseSettings):
         if provider not in {"openai", "anthropic"}:
             raise ValueError("LLM_PROVIDER must be either 'openai' or 'anthropic'.")
         self.llm_provider = provider
+        storage_backend = self.storage_backend.strip().lower()
+        if storage_backend not in {"sqlite", "dynamodb"}:
+            raise ValueError("STORAGE_BACKEND must be either 'sqlite' or 'dynamodb'.")
+        if storage_backend == "dynamodb" and not self.dynamodb_table_name.strip():
+            raise ValueError("DYNAMODB_TABLE_NAME is required when STORAGE_BACKEND=dynamodb.")
+        self.storage_backend = storage_backend
         if provider == "anthropic" and not self.anthropic_api_key.strip():
             raise ValueError("ANTHROPIC_API_KEY is required when LLM_PROVIDER=anthropic.")
         if self.app_env != "development" and self.admin_api_token == "change-me":
             raise ValueError("ADMIN_API_TOKEN must be changed outside development.")
-        self.data_dir.mkdir(parents=True, exist_ok=True)
-        self.sqlite_path.parent.mkdir(parents=True, exist_ok=True)
-        self.session_db_path.parent.mkdir(parents=True, exist_ok=True)
+        if storage_backend == "sqlite":
+            self.data_dir.mkdir(parents=True, exist_ok=True)
+            self.sqlite_path.parent.mkdir(parents=True, exist_ok=True)
+            self.session_db_path.parent.mkdir(parents=True, exist_ok=True)
 
     @property
     def drive_folder_ids(self) -> list[str]:

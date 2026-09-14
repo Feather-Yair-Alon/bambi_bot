@@ -31,8 +31,9 @@ async def lifespan(_app: FastAPI):
     db = get_db()
     db.init_schema()
     removed_sessions = db.prune_chat_history(settings.chat_history_retention_days)
-    prune_agent_sessions(settings.session_db_path, removed_sessions)
-    sanitize_persisted_history(settings.sqlite_path, settings.session_db_path)
+    if settings.storage_backend == "sqlite":
+        prune_agent_sessions(settings.session_db_path, removed_sessions)
+        sanitize_persisted_history(settings.sqlite_path, settings.session_db_path)
     yield
 
 
