@@ -123,6 +123,8 @@ async def test_anthropic_agent_reuses_existing_knowledge_tool(anthropic_service:
     assert output.needs_human_review is False
     requests = anthropic_service._client.messages.requests
     assert len(requests) == 2
+    assert requests[0]["cache_control"] == {"type": "ephemeral"}
+    assert requests[0]["output_config"] == {"effort": "low"}
     tool_result = requests[1]["messages"][-1]["content"][0]
     assert tool_result["type"] == "tool_result"
     assert "content" in tool_result["content"]

@@ -9,7 +9,7 @@ Parameters:
     Default: claude-sonnet-5
   MetaGraphApiVersion:
     Type: String
-    Default: v23.0
+    Default: v26.0
   LogRetentionDays:
     Type: Number
     Default: 30
@@ -174,6 +174,10 @@ Resources:
           DYNAMODB_TABLE_NAME: !Ref RuntimeTable
           LLM_PROVIDER: anthropic
           ANTHROPIC_MODEL: !Ref AnthropicModel
+          ANTHROPIC_EFFORT: "low"
+          ANTHROPIC_MAX_TOKENS: "1200"
+          ANTHROPIC_MAX_TOOL_ROUNDS: "6"
+          ANTHROPIC_HISTORY_MESSAGES: "12"
           ANTHROPIC_TIMEOUT_SECONDS: "90"
           META_GRAPH_API_VERSION: !Ref MetaGraphApiVersion
           RUNTIME_SECRET_ARN: !Ref RuntimeSecret
@@ -187,7 +191,7 @@ Resources:
       FunctionName: !Ref WorkerFunction
       FunctionResponseTypes:
         - ReportBatchItemFailures
-      MaximumBatchingWindowInSeconds: 1
+      MaximumBatchingWindowInSeconds: 0
 
   HttpApi:
     Type: AWS::ApiGatewayV2::Api

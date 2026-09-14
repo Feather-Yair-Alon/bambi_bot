@@ -166,6 +166,27 @@ def test_worker_formats_follow_up_once() -> None:
     assert worker._answer_text(answer) == "אפשר לעזור.\n\nאיזה קורס מעניין אותך?"
 
 
+def test_worker_converts_markdown_to_whatsapp_plain_text() -> None:
+    answer = SimpleNamespace(
+        answer=(
+            "## פרטי הקורס\n\n"
+            "**משך:** 8 שעות\n"
+            "- נושא ראשון\n"
+            "- [מידע נוסף](https://example.com/course)\n"
+            "`אין להציג קוד`"
+        ),
+        follow_up_question=None,
+    )
+
+    assert worker._answer_text(answer) == (
+        "פרטי הקורס\n\n"
+        "משך: 8 שעות\n"
+        "• נושא ראשון\n"
+        "• מידע נוסף: https://example.com/course\n"
+        "אין להציג קוד"
+    )
+
+
 def test_dynamodb_runtime_sessions_and_message_claims() -> None:
     table = FakeTable()
     db = DynamoDatabase("test", table=table)

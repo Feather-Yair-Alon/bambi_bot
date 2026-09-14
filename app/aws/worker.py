@@ -4,6 +4,8 @@ import asyncio
 import json
 import logging
 import os
+import re
+import time
 from typing import Any, Iterator
 
 import httpx
@@ -55,12 +57,28 @@ def _incoming_messages(payload: dict[str, Any]) -> Iterator[dict[str, str]]:
                     }
 
 
+def _whatsapp_plain_text(value: str) -> str:
+    text = value.replace("\r\n", "\n").replace("\r", "\n")
+    text = re.sub(r"```(?:[A-Za-z0-9_+-]+)?\n?", "", text)
+    text = text.replace("```", "").replace("`", "")
+    text = re.sub(r"\[([^\]]+)\]\((https?://[^)]+)\)", r"\1: \2", text)
+    text = re.sub(r"(?m)^\s{0,3}#{1,6}\s+", "", text)
+    text = re.sub(r"(?m)^\s*[-*+]\s+", "• ", text)
+    text = re.sub(r"\*\*([^*\n]+)\*\*", r"\1", text)
+    text = re.sub(r"__([^_\n]+)__", r"\1", text)
+    text = re.sub(r"(?<!\*)\*([^*\n]+)\*(?!\*)", r"\1", text)
+    text = re.sub(r"(?<!\w)_([^_\n]+)_(?!\w)", r"\1", text)
+    text = re.sub(r"~~([^~\n]+)~~", r"\1", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
 def _answer_text(answer: Any) -> str:
     text = str(answer.answer or "").strip()
     follow_up = str(answer.follow_up_question or "").strip()
     if follow_up and follow_up not in text:
         text = f"{text}\n\n{follow_up}".strip()
-    return text
+    return _whatsapp_plain_text(text)
 
 
 async def _meta_post(secret: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -68,7 +86,7 @@ async def _meta_post(secret: dict[str, Any], payload: dict[str, Any]) -> None:
     phone_number_id = str(secret.get("meta_phone_number_id") or "")
     if not token or not phone_number_id:
         raise RuntimeError("Meta access token or phone number ID is not configured")
-    version = os.environ.get("META_GRAPH_API_VERSION", "v23.0")
+    version = os.environ.get("META_GRAPH_API_VERSION", "v26.0")
     url = f"https://graph.facebook.com/{version}/{phone_number_id}/messages"
     async with httpx.AsyncClient(timeout=20.0) as client:
         response = await client.post(
@@ -76,6 +94,12 @@ async def _meta_post(secret: dict[str, Any], payload: dict[str, Any]) -> None:
             headers={"authorization": f"Bearer {token}"},
             json=payload,
         )
+        if response.is_error:
+            logger.warning(
+                "Meta API request failed status=%s error=%s",
+                response.status_code,
+                response.text[:1000],
+            )
         response.raise_for_status()
 
 
@@ -89,6 +113,19 @@ async def _send_typing(secret: dict[str, Any], message_id: str) -> None:
             "typing_indicator": {"type": "text"},
         },
     )
+
+
+async def _send_typing_safely(
+    secret: dict[str, Any], message_id: str, started: float
+) -> None:
+    try:
+        await _send_typing(secret, message_id)
+        logger.info(
+            "WhatsApp typing indicator sent elapsed_ms=%s",
+            round((time.perf_counter() - started) * 1000),
+        )
+    except Exception:
+        logger.warning("Could not send WhatsApp typing indicator", exc_info=True)
 
 
 async def _send_text(secret: dict[str, Any], recipient: str, text: str) -> None:
@@ -124,19 +161,29 @@ async def _process_message(message: dict[str, str], secret: dict[str, Any]) -> N
     if existing or not db.claim_inbound_message(message_id):
         return
 
+    started = time.perf_counter()
     try:
-        try:
-            await _send_typing(secret, message_id)
-        except Exception:
-            logger.warning("Could not send WhatsApp typing indicator", exc_info=True)
+        typing_task = asyncio.create_task(_send_typing_safely(secret, message_id, started))
+        await asyncio.sleep(0)
 
         session_id = f"whatsapp:{message['from']}"
         db.upsert_session(session_id)
+        agent_started = time.perf_counter()
         answer = await get_agent_service().ask(session_id, message["text"])
+        await typing_task
+        logger.info(
+            "WhatsApp agent completed duration_ms=%s total_elapsed_ms=%s",
+            round((time.perf_counter() - agent_started) * 1000),
+            round((time.perf_counter() - started) * 1000),
+        )
         response_text = _answer_text(answer)
         db.store_inbound_response(message_id, response_text)
         await _send_text(secret, message["from"], response_text)
         db.mark_inbound_sent(message_id)
+        logger.info(
+            "WhatsApp response sent total_elapsed_ms=%s",
+            round((time.perf_counter() - started) * 1000),
+        )
     except Exception:
         try:
             db.release_inbound_message(message_id)
@@ -162,4 +209,3 @@ def handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
             logger.exception("WhatsApp queue record failed")
             failures.append({"itemIdentifier": str(record.get("messageId") or "")})
     return {"batchItemFailures": failures}
-

@@ -36,6 +36,7 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str = Field(default="", alias="ANTHROPIC_API_KEY")
     anthropic_model: str = Field(default="claude-sonnet-5", alias="ANTHROPIC_MODEL")
+    anthropic_effort: str = Field(default="low", alias="ANTHROPIC_EFFORT")
     anthropic_max_tokens: int = Field(default=1600, alias="ANTHROPIC_MAX_TOKENS")
     anthropic_max_tool_rounds: int = Field(default=10, alias="ANTHROPIC_MAX_TOOL_ROUNDS")
     anthropic_timeout_seconds: float = Field(default=90.0, alias="ANTHROPIC_TIMEOUT_SECONDS")
@@ -75,6 +76,10 @@ class Settings(BaseSettings):
         self.storage_backend = storage_backend
         if provider == "anthropic" and not self.anthropic_api_key.strip():
             raise ValueError("ANTHROPIC_API_KEY is required when LLM_PROVIDER=anthropic.")
+        effort = self.anthropic_effort.strip().lower()
+        if effort not in {"low", "medium", "high", "xhigh", "max"}:
+            raise ValueError("ANTHROPIC_EFFORT must be low, medium, high, xhigh, or max.")
+        self.anthropic_effort = effort
         if self.app_env != "development" and self.admin_api_token == "change-me":
             raise ValueError("ADMIN_API_TOKEN must be changed outside development.")
         if storage_backend == "sqlite":
