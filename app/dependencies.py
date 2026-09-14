@@ -5,6 +5,7 @@ from functools import lru_cache
 from app.config import get_settings
 from app.db import Database
 from app.services.agent_service import AgentService
+from app.services.anthropic_agent_service import AnthropicAgentService
 from app.services.knowledge_files import KnowledgeFileService
 
 
@@ -22,5 +23,8 @@ def get_knowledge_file_service() -> KnowledgeFileService:
 
 
 @lru_cache
-def get_agent_service() -> AgentService:
-    return AgentService(get_settings(), get_db(), get_knowledge_file_service())
+def get_agent_service() -> AgentService | AnthropicAgentService:
+    settings = get_settings()
+    if settings.llm_provider == "anthropic":
+        return AnthropicAgentService(settings, get_db(), get_knowledge_file_service())
+    return AgentService(settings, get_db(), get_knowledge_file_service())

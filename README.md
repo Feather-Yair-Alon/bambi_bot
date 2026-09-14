@@ -4,7 +4,7 @@ Local Dockerized knowledge agent for Bambi course and FAQ data.
 
 ## Quick start
 
-1. Set `OPENAI_API_KEY` in `.env`.
+1. Set `LLM_PROVIDER=openai` and `OPENAI_API_KEY`, or set `LLM_PROVIDER=anthropic` and `ANTHROPIC_API_KEY`, in `.env`.
 2. Run `docker compose up --build`.
 3. Open `http://localhost:8000/`.
 
@@ -65,7 +65,27 @@ Use `--refresh-tool course_example` to invalidate one cached course decision and
 - FastAPI chat API and local test UI
 - SQLite-backed chat and tool-call history
 - File-backed knowledge tools from `app/tools-knowleage`
-- OpenAI Agents SDK sessions, tools, and guardrails
+- Selectable OpenAI Agents SDK or Anthropic Claude runtime with the same approved tools and guardrails
+
+## Local Claude evaluation
+
+Claude runs behind a provider flag so the approved OpenAI demo remains the default and available as a rollback:
+
+```powershell
+$env:LLM_PROVIDER="anthropic"
+$env:ANTHROPIC_API_KEY="..."
+$env:ANTHROPIC_MODEL="claude-sonnet-5"
+docker compose up --build
+```
+
+Anthropic response logs include total duration, time to first streamed text, tool rounds, and token usage. Do not commit the API key or place it in benchmark output.
+
+Run the read-only latency suite after exporting the Anthropic key:
+
+```powershell
+$env:ANTHROPIC_API_KEY="..."
+python scripts\benchmark_anthropic.py
+```
 
 ## Useful endpoints
 

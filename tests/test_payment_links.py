@@ -5,8 +5,9 @@ from typing import Any
 
 from app.services.mybusiness import pointer
 from app.services.payment_links import (
-    PaymentLinkService,
     REQUIRED_CUSTOMER_DETAILS,
+    PaymentLinkService,
+    current_price_options_from_products,
     is_mismatched_course_payment_link,
     is_stale_dated_payment_link,
 )
@@ -461,6 +462,24 @@ def test_get_course_current_price_falls_back_to_matching_product_price() -> None
             "description_for_bot": "\u05e7\u05d5\u05e8\u05e1 \"\u05d4\u05d3\u05e8\u05db\u05d4 \u05d8\u05d5\u05d1\u05d4\" - 80025 - \u05de\u05d7\u05d9\u05e8 2100",
         }
     ]
+
+
+def test_get_course_current_price_rejects_weak_unrelated_product_fallback() -> None:
+    prices = current_price_options_from_products(
+        [
+            {
+                "objectId": "prod_motorcycle_refresh_group",
+                "Name": "רענון נהיגה אופנועים קבוצה",
+                "CatalogNumber": "80047",
+                "Price": 4900,
+                "IsActive": True,
+                "Category": None,
+            }
+        ],
+        'רענון הובלת חומ"ס',
+    )
+
+    assert prices == []
 
 
 def test_heavy_vehicle_current_price_combines_theory_link_and_practical_product() -> None:

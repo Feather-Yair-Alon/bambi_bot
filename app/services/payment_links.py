@@ -5,9 +5,12 @@ from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
+from app.services.course_catalog import (
+    detect_course_language,
+    resolve_course_category_code,
+    text_matches_language,
+)
 from app.services.mybusiness import clean, json_dumps, normalize_text, pointer
-from app.services.course_catalog import detect_course_language, resolve_course_category_code, text_matches_language
-
 
 TENANT_DOMAIN = "6a09b3ab-e66c-64a7-7dbc-06c797b56505.mbapps.co.il"
 PAYMENT_URL_BASE = f"https://{TENANT_DOMAIN}/apps/mybooks/payment-btn-page?cls=PaymentBtns&oid="
@@ -891,7 +894,13 @@ def current_price_options_from_products(products: list[dict[str, Any]], search: 
 
     query = normalize_payment_text(search)
     if query:
-        scored = [(product_price_match_score(product, query), product) for product in candidates]
+        scored = [
+            (product_price_match_score(product, query), product)
+            for product in candidates
+            if is_sufficient_product_price_match(product, query)
+        ]
+        if not scored:
+            return []
         max_score = max(score for score, _product in scored)
         if max_score <= 0:
             return []
@@ -922,6 +931,30 @@ def product_price_match_score(product: dict[str, Any], query: str) -> int:
         if term in category_name:
             score += 3
     return score
+
+
+def is_sufficient_product_price_match(product: dict[str, Any], query: str) -> bool:
+    """Reject weak fallback matches caused by a single generic shared word."""
+    product_name = normalize_payment_text(product.get("Name"))
+    catalog_number = normalize_payment_text(product.get("CatalogNumber"))
+    category = product.get("Category") if isinstance(product.get("Category"), dict) else {}
+    category_name = normalize_payment_text(category.get("Name"))
+    category_code = normalize_payment_text(category.get("Code"))
+    searchable = f"{product_name} {catalog_number} {category_name} {category_code}"
+
+    if query in searchable:
+        return True
+
+    language = detect_course_language(query)
+    if language and text_matches_language(product_name, language):
+        return True
+
+    terms = [term for term in payment_search_terms(query)[1:] if len(term) >= 3]
+    if not terms:
+        return False
+    matched = sum(1 for term in terms if term in searchable)
+    required = 1 if len(terms) == 1 else 2
+    return matched >= required
 
 
 def format_product_price_option(product: dict[str, Any]) -> dict[str, Any]:

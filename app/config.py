@@ -23,11 +23,20 @@ class Settings(BaseSettings):
     sqlite_path: Path = Field(default=Path("./data/bambi.db"), alias="SQLITE_PATH")
     session_db_path: Path = Field(default=Path("./data/agent_sessions.db"), alias="SESSION_DB_PATH")
 
+    llm_provider: str = Field(default="openai", alias="LLM_PROVIDER")
+
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-5.5", alias="OPENAI_MODEL")
     openai_reasoning_effort: str = Field(default="low", alias="OPENAI_REASONING_EFFORT")
     openai_text_verbosity: str = Field(default="low", alias="OPENAI_TEXT_VERBOSITY")
     openai_embedding_model: str = Field(default="text-embedding-3-small", alias="OPENAI_EMBEDDING_MODEL")
+
+    anthropic_api_key: str = Field(default="", alias="ANTHROPIC_API_KEY")
+    anthropic_model: str = Field(default="claude-sonnet-5", alias="ANTHROPIC_MODEL")
+    anthropic_max_tokens: int = Field(default=1600, alias="ANTHROPIC_MAX_TOKENS")
+    anthropic_max_tool_rounds: int = Field(default=10, alias="ANTHROPIC_MAX_TOOL_ROUNDS")
+    anthropic_timeout_seconds: float = Field(default=90.0, alias="ANTHROPIC_TIMEOUT_SECONDS")
+    anthropic_history_messages: int = Field(default=20, alias="ANTHROPIC_HISTORY_MESSAGES")
 
     qdrant_url: str = Field(default="http://localhost:6333", alias="QDRANT_URL")
     qdrant_collection: str = Field(default="bambi-knowledge", alias="QDRANT_COLLECTION")
@@ -50,7 +59,13 @@ class Settings(BaseSettings):
 
     ingest_on_startup: bool = Field(default=False, alias="INGEST_ON_STARTUP")
 
-    def model_post_init(self, __context: object) -> None:
+    def model_post_init(self, __context: object, /) -> None:
+        provider = self.llm_provider.strip().lower()
+        if provider not in {"openai", "anthropic"}:
+            raise ValueError("LLM_PROVIDER must be either 'openai' or 'anthropic'.")
+        self.llm_provider = provider
+        if provider == "anthropic" and not self.anthropic_api_key.strip():
+            raise ValueError("ANTHROPIC_API_KEY is required when LLM_PROVIDER=anthropic.")
         if self.app_env != "development" and self.admin_api_token == "change-me":
             raise ValueError("ADMIN_API_TOKEN must be changed outside development.")
         self.data_dir.mkdir(parents=True, exist_ok=True)
