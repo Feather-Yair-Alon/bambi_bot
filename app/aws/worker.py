@@ -12,6 +12,11 @@ import httpx
 
 from app.aws.dynamodb_db import DynamoDatabase
 from app.aws.secrets import get_runtime_secret
+from app.aws.whatsapp_handoff import (
+    build_contact_message,
+    build_handoff_link_message,
+    find_approved_handoff_contact,
+)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -147,6 +152,39 @@ async def _send_text(secret: dict[str, Any], recipient: str, text: str) -> None:
         )
 
 
+async def _send_handoff_extras(
+    secret: dict[str, Any],
+    recipient: str,
+    response_text: str,
+    history: list[dict[str, Any]],
+) -> None:
+    contact = find_approved_handoff_contact(response_text)
+    if contact is None:
+        return
+
+    try:
+        await _meta_post(secret, build_contact_message(contact, recipient))
+        logger.info("WhatsApp handoff contact sent owner=%s", contact.owner)
+    except Exception:
+        logger.warning("Could not send WhatsApp handoff contact", exc_info=True)
+
+    try:
+        await _send_text(secret, recipient, build_handoff_link_message(contact, history))
+        logger.info("WhatsApp handoff link sent owner=%s", contact.owner)
+    except Exception:
+        logger.warning("Could not send WhatsApp handoff link", exc_info=True)
+
+
+async def _send_response_bundle(
+    secret: dict[str, Any],
+    recipient: str,
+    response_text: str,
+    history: list[dict[str, Any]],
+) -> None:
+    await _send_text(secret, recipient, response_text)
+    await _send_handoff_extras(secret, recipient, response_text, history)
+
+
 async def _process_message(message: dict[str, str], secret: dict[str, Any]) -> None:
     from app.dependencies import get_agent_service, get_db
 
@@ -155,11 +193,18 @@ async def _process_message(message: dict[str, str], secret: dict[str, Any]) -> N
         raise RuntimeError("WhatsApp worker requires DynamoDB storage")
 
     message_id = message["message_id"]
+    session_id = f"whatsapp:{message['from']}"
     existing = db.get_inbound_message(message_id)
     if existing and existing.get("status") == "sent":
         return
     if existing and existing.get("status") == "response_ready":
-        await _send_text(secret, message["from"], str(existing.get("response_text") or ""))
+        response_text = str(existing.get("response_text") or "")
+        await _send_response_bundle(
+            secret,
+            message["from"],
+            response_text,
+            db.get_messages(session_id),
+        )
         db.mark_inbound_sent(message_id)
         return
     if existing or not db.claim_inbound_message(message_id):
@@ -170,7 +215,6 @@ async def _process_message(message: dict[str, str], secret: dict[str, Any]) -> N
         typing_task = asyncio.create_task(_send_typing_safely(secret, message_id, started))
         await asyncio.sleep(0)
 
-        session_id = f"whatsapp:{message['from']}"
         db.upsert_session(session_id)
         agent_started = time.perf_counter()
         answer = await get_agent_service().ask(session_id, message["text"])
@@ -181,7 +225,12 @@ async def _process_message(message: dict[str, str], secret: dict[str, Any]) -> N
         )
         response_text = _answer_text(answer)
         db.store_inbound_response(message_id, response_text)
-        await _send_text(secret, message["from"], response_text)
+        await _send_response_bundle(
+            secret,
+            message["from"],
+            response_text,
+            db.get_messages(session_id),
+        )
         db.mark_inbound_sent(message_id)
         logger.info(
             "WhatsApp response sent total_elapsed_ms=%s",

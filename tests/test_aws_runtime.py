@@ -5,10 +5,17 @@ import hmac
 import json
 from types import SimpleNamespace
 from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 from botocore.exceptions import ClientError
 
 from app.aws import webhook, worker
+from app.aws.whatsapp_handoff import (
+    build_contact_message,
+    build_handoff_link,
+    build_handoff_summary,
+    find_approved_handoff_contact,
+)
 from app.aws.dynamodb_db import DynamoDatabase
 from app.config import Settings
 
@@ -205,6 +212,105 @@ async def test_worker_typing_indicator_uses_short_timeout(monkeypatch) -> None:
 
     assert captured["timeout_seconds"] == 3.0
     assert captured["payload"]["typing_indicator"] == {"type": "text"}
+
+
+def test_handoff_matches_only_one_approved_contact() -> None:
+    contact = find_approved_handoff_contact(
+        "אני מעבירה אותך למיקה, רכזת תחום עבודה בגובה: 054-940-5419"
+    )
+
+    assert contact is not None
+    assert contact.owner.startswith("מיקה")
+    assert find_approved_handoff_contact("אפשר לפנות למספר 050-000-0000") is None
+    assert find_approved_handoff_contact("מחיר 549 ש״ח, מועד 40.54.19") is None
+    assert (
+        find_approved_handoff_contact("אפשר לפנות למיקה 054-940-5419 או לחן 054-904-7872")
+        is None
+    )
+
+
+def test_handoff_contact_card_and_link_use_whatsapp_number() -> None:
+    contact = find_approved_handoff_contact("פנו לאליאור: 0549688028")
+    assert contact is not None
+
+    payload = build_contact_message(contact, "972501234567")
+    link = build_handoff_link(
+        contact,
+        [{"role": "user", "content": "אני רוצה להירשם לקורס מלגזה"}],
+    )
+
+    assert payload["type"] == "contacts"
+    assert payload["contacts"][0]["name"]["first_name"] == "אליאור"
+    assert payload["contacts"][0]["phones"][0]["wa_id"] == "972549688028"
+    parsed = urlparse(link)
+    assert parsed.netloc == "wa.me"
+    assert parsed.path == "/972549688028"
+    assert "קורס מלגזה" in parse_qs(parsed.query)["text"][0]
+
+
+def test_handoff_summary_is_compact_and_removes_personal_details() -> None:
+    history = [
+        {"role": "user", "content": "שלום"},
+        {"role": "user", "content": "אני צריך קורס עבודה בגובה"},
+        {"role": "assistant", "content": "איזה נושא?"},
+        {
+            "role": "user",
+            "content": "כן, הטלפון 054-123-4567 והמייל student@example.com ותז 123456782",
+        },
+    ]
+
+    summary = build_handoff_summary("מיקה", history)
+
+    assert "אני צריך קורס עבודה בגובה" in summary
+    assert "054-123-4567" not in summary
+    assert "student@example.com" not in summary
+    assert "123456782" not in summary
+    assert "[PHONE_REDACTED]" not in summary
+
+
+async def test_worker_sends_contact_and_prefilled_link_after_handoff(monkeypatch) -> None:
+    payloads: list[dict[str, Any]] = []
+
+    async def fake_meta_post(
+        secret: dict[str, Any], payload: dict[str, Any], *, timeout_seconds: float = 20.0
+    ) -> None:
+        del secret, timeout_seconds
+        payloads.append(payload)
+
+    monkeypatch.setattr(worker, "_meta_post", fake_meta_post)
+
+    await worker._send_response_bundle(
+        {"meta_access_token": "token", "meta_phone_number_id": "phone-id"},
+        "972501234567",
+        "נדרש המשך טיפול מול מיקה: 054-940-5419",
+        [{"role": "user", "content": "אני צריך קורס עבודה בגובה"}],
+    )
+
+    assert [payload["type"] for payload in payloads] == ["text", "contacts", "text"]
+    assert "wa.me/972549405419" in payloads[-1]["text"]["body"]
+
+
+async def test_handoff_contact_failure_does_not_block_link(monkeypatch) -> None:
+    sent_types: list[str] = []
+
+    async def fake_meta_post(
+        secret: dict[str, Any], payload: dict[str, Any], *, timeout_seconds: float = 20.0
+    ) -> None:
+        del secret, timeout_seconds
+        sent_types.append(payload["type"])
+        if payload["type"] == "contacts":
+            raise RuntimeError("contact messages unavailable")
+
+    monkeypatch.setattr(worker, "_meta_post", fake_meta_post)
+
+    await worker._send_handoff_extras(
+        {"meta_access_token": "token", "meta_phone_number_id": "phone-id"},
+        "972501234567",
+        "נדרש המשך טיפול מול מיקה: 054-940-5419",
+        [{"role": "user", "content": "אני צריך קורס עבודה בגובה"}],
+    )
+
+    assert sent_types == ["contacts", "text"]
 
 
 def test_dynamodb_runtime_sessions_and_message_claims() -> None:
