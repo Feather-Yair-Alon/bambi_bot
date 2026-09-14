@@ -187,6 +187,26 @@ def test_worker_converts_markdown_to_whatsapp_plain_text() -> None:
     )
 
 
+async def test_worker_typing_indicator_uses_short_timeout(monkeypatch) -> None:
+    captured: dict[str, Any] = {}
+
+    async def fake_meta_post(
+        secret: dict[str, Any], payload: dict[str, Any], *, timeout_seconds: float = 20.0
+    ) -> None:
+        captured.update(
+            secret=secret,
+            payload=payload,
+            timeout_seconds=timeout_seconds,
+        )
+
+    monkeypatch.setattr(worker, "_meta_post", fake_meta_post)
+
+    await worker._send_typing({"meta_access_token": "token"}, "wamid.1")
+
+    assert captured["timeout_seconds"] == 3.0
+    assert captured["payload"]["typing_indicator"] == {"type": "text"}
+
+
 def test_dynamodb_runtime_sessions_and_message_claims() -> None:
     table = FakeTable()
     db = DynamoDatabase("test", table=table)

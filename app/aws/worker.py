@@ -14,6 +14,7 @@ from app.aws.dynamodb_db import DynamoDatabase
 from app.aws.secrets import get_runtime_secret
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 _runtime_configured = False
 
 
@@ -81,14 +82,16 @@ def _answer_text(answer: Any) -> str:
     return _whatsapp_plain_text(text)
 
 
-async def _meta_post(secret: dict[str, Any], payload: dict[str, Any]) -> None:
+async def _meta_post(
+    secret: dict[str, Any], payload: dict[str, Any], *, timeout_seconds: float = 20.0
+) -> None:
     token = str(secret.get("meta_access_token") or "")
     phone_number_id = str(secret.get("meta_phone_number_id") or "")
     if not token or not phone_number_id:
         raise RuntimeError("Meta access token or phone number ID is not configured")
     version = os.environ.get("META_GRAPH_API_VERSION", "v26.0")
     url = f"https://graph.facebook.com/{version}/{phone_number_id}/messages"
-    async with httpx.AsyncClient(timeout=20.0) as client:
+    async with httpx.AsyncClient(timeout=timeout_seconds) as client:
         response = await client.post(
             url,
             headers={"authorization": f"Bearer {token}"},
@@ -112,6 +115,7 @@ async def _send_typing(secret: dict[str, Any], message_id: str) -> None:
             "message_id": message_id,
             "typing_indicator": {"type": "text"},
         },
+        timeout_seconds=3.0,
     )
 
 
@@ -170,7 +174,6 @@ async def _process_message(message: dict[str, str], secret: dict[str, Any]) -> N
         db.upsert_session(session_id)
         agent_started = time.perf_counter()
         answer = await get_agent_service().ask(session_id, message["text"])
-        await typing_task
         logger.info(
             "WhatsApp agent completed duration_ms=%s total_elapsed_ms=%s",
             round((time.perf_counter() - agent_started) * 1000),
@@ -184,6 +187,9 @@ async def _process_message(message: dict[str, str], secret: dict[str, Any]) -> N
             "WhatsApp response sent total_elapsed_ms=%s",
             round((time.perf_counter() - started) * 1000),
         )
+        if not typing_task.done():
+            typing_task.cancel()
+        await asyncio.gather(typing_task, return_exceptions=True)
     except Exception:
         try:
             db.release_inbound_message(message_id)
