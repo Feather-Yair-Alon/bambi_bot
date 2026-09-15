@@ -172,3 +172,14 @@ def test_anthropic_provider_requires_api_key(tmp_path: Path) -> None:
             SQLITE_PATH=str(tmp_path / "bambi.db"),
             SESSION_DB_PATH=str(tmp_path / "sessions.db"),
         )
+
+
+def test_anthropic_prompt_contains_precise_driver_eye_exam_link_rule(
+    anthropic_service: AnthropicAgentService,
+) -> None:
+    prompt = anthropic_service._system_prompt()
+
+    assert "ורק כאשר בתשובה הנוכחית" in prompt
+    assert "https://www.gov.il/he/service/apply_for_new_driver_drivers_license" in prompt
+    assert "אם הקורס אינו קורס נהיגה" in prompt
+    assert "אל תחליפי באמצעותו קישורים ייעודיים" in prompt

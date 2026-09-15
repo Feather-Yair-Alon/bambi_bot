@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-22T18:12:30.132924+00:00",
+  "generated_at": "2026-09-15T00:00:00+03:00",
   "raw_dir": "data\\website_raw\\20260701T143921Z",
   "generator": "scripts/update_knowledge_from_drive_quotes.py",
   "tools": [
@@ -222,9 +222,28 @@
       "display_name": "קורס הוראת נהיגה",
       "description": "יש להשתמש בכלי זה כאשר משתמש שואל על קורס הוראת נהיגה / מורה נהיגה לרכב במכללת במבי, כולל מתכונת, תנאי קבלה, שלבי רישוי, משך, נושאי לימוד, תעודה.",
       "file_name": "generated/course_driving_instructor.txt",
-      "source_count": 1,
+      "source_count": 2,
       "source_files": [
-        "raw/posts/4391-d7-a7-d7-95-d7-a8-d7-a1--d7-94-d7-95-d7-a8-d7-90-d7-aa--d7-a0-d7-94-d7-99-d7-92-d7-94.json"
+        "raw/posts/4391-d7-a7-d7-95-d7-a8-d7-a1--d7-94-d7-95-d7-a8-d7-90-d7-aa--d7-a0-d7-94-d7-99-d7-92-d7-94.json",
+        "client_update:driving_instructor_2026-09-15"
+      ],
+      "aliases": [
+        "הוראת נהיגה",
+        "קורס הוראת נהיגה",
+        "מורה נהיגה",
+        "מורי נהיגה",
+        "קורס מורה נהיגה",
+        "רישיון הוראת נהיגה"
+      ],
+      "source_type": "website_and_client_update",
+      "source_metadata": [
+        {
+          "file_id": "client_update:driving_instructor_2026-09-15",
+          "title": "מידע מעודכן - קורס הוראת נהיגה",
+          "folder_path": "",
+          "modified_time": "2026-09-15T00:00:00+03:00",
+          "url": null
+        }
       ]
     },
     {
@@ -824,6 +843,34 @@
           "folder_path": "בטיחות",
           "modified_time": "2026-08-17T07:18:53.000Z",
           "url": "https://docs.google.com/document/d/1pPDWUAbn75W7H7JOeihNNgaQF0QRJgfI/edit?usp=drivesdk&ouid=100365253962123290484&rtpof=true&sd=true"
+        }
+      ]
+    },
+    {
+      "tool_id": "course_safety_controller",
+      "display_name": "קורס בקר בטיחות",
+      "description": "מידע סטטי ומאושר על קורס בקר בטיחות ותפקיד בקר בטיחות בבנייה: תנאי קבלה, קהל יעד, תפקידים, מתכונת, תוכנית לימודים, תעודה ומיקום. יש להשתמש רק עבור בקר בטיחות או בקרי בטיחות בבנייה, ולא עבור ממוני בטיחות, נאמני בטיחות, קציני בטיחות בתעבורה או ימי עיון כלליים.",
+      "file_name": "generated/course_safety_controller.txt",
+      "source_count": 1,
+      "source_files": [
+        "client_update:safety_controller_2026-09-15"
+      ],
+      "aliases": [
+        "בקר בטיחות",
+        "בקרי בטיחות",
+        "קורס בקר בטיחות",
+        "הכשרת בקרי בטיחות",
+        "בקר בטיחות בבנייה",
+        "בקר בטיחות באתר בנייה"
+      ],
+      "source_type": "client_update",
+      "source_metadata": [
+        {
+          "file_id": "client_update:safety_controller_2026-09-15",
+          "title": "מידע מאושר מהלקוח - קורס בקר בטיחות",
+          "folder_path": "",
+          "modified_time": "2026-09-15T00:00:00+03:00",
+          "url": null
         }
       ]
     },

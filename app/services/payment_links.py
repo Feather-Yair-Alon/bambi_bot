@@ -46,6 +46,7 @@ PAYMENT_SEARCH_STOPWORDS = {
     "את",
     "אל",
     "לקציני",
+    "בטיחות",
 }
 
 

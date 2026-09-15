@@ -107,6 +107,24 @@ def test_course_row_matching_does_not_mix_other_safety_officer_study_days() -> N
     assert course_row_matches_search(row, query) is False
 
 
+def test_safety_controller_search_requires_distinctive_controller_term() -> None:
+    query = "קורס בקר בטיחות"
+    unrelated_row = {
+        "Name": "יום עיון בטיחות בבנייה ופיגומים",
+        "ProductCategory": {"Name": "יום עיון", "Code": "80030"},
+        "ProductId": {"Name": "יום עיון בטיחות"},
+    }
+    matching_row = {
+        "Name": "הכשרת בקרי בטיחות בבנייה",
+        "ProductCategory": {"Name": "הכשרות בטיחות", "Code": ""},
+        "ProductId": {"Name": "קורס בקר בטיחות"},
+    }
+
+    assert course_search_keywords(query) == ["בקר"]
+    assert course_row_matches_search(unrelated_row, query) is False
+    assert course_row_matches_search(matching_row, query) is True
+
+
 def test_map_available_course_skips_full_course() -> None:
     category = {"category_id": "cat1", "name": "מלגזה", "code": "80001"}
     row = {

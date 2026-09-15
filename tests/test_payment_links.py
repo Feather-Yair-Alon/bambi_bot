@@ -10,6 +10,7 @@ from app.services.payment_links import (
     current_price_options_from_products,
     is_mismatched_course_payment_link,
     is_stale_dated_payment_link,
+    payment_search_terms,
 )
 
 
@@ -29,6 +30,10 @@ def test_heavy_vehicle_category_rejects_crane_payment_button() -> None:
         link,
         {"category_code": "80009", "category_name": "עגורן העמסה עצמית"},
     )
+
+
+def test_safety_controller_payment_search_does_not_search_generic_safety_term() -> None:
+    assert payment_search_terms("קורס בקר בטיחות") == ["קורס בקר בטיחות", "בקר"]
 
 
 class FakeMyBusiness:

@@ -64,6 +64,7 @@ COURSE_SEARCH_STOPWORDS = {
     "לקורס",
     "בקורס",
     "קציני",
+    "בטיחות",
 }
 PAYMENT_STATUS_IDS = {
     "PAID": "0eBXa9VeT8",

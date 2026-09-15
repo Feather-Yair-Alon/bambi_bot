@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from app.services.agent_service import AgentService
+from app.services.knowledge_files import KnowledgeFileService
 from scripts.update_knowledge_from_drive_quotes import (
     DocumentKnowledgeDecision,
     DriveFileRecord,
@@ -250,6 +251,39 @@ def test_heavy_vehicle_tool_includes_practical_process_without_dynamic_data() ->
     assert "3,933" not in content
     assert "5,500" not in content
     assert "06.10.26" not in content
+
+
+def test_safety_controller_tool_contains_static_facts_without_dynamic_course_data() -> None:
+    content = Path("app/tools-knowleage/generated/course_safety_controller.txt").read_text(encoding="utf-8")
+
+    assert "אחד ממסלולי הכשירות" in content
+    assert "מהנדס אזרחי רשום או הנדסאי אזרחי רשום" in content
+    assert "ממונה בטיחות מוסמך מענף הבנייה" in content
+    assert "שני ימי לימוד" in content
+    assert "שני ימי כשירות" in content
+    assert "מטריצת האחריות" in content
+    assert "MyBusiness בלבד" in content
+
+
+def test_safety_controller_tool_is_exposed_by_generated_manifest() -> None:
+    tools = {item["tool_id"]: item for item in KnowledgeFileService().list_tools()}
+
+    assert tools["course_safety_controller"]["tool_name"] == "קורס בקר בטיחות"
+    assert tools["course_safety_controller"]["file_name"] == "generated/course_safety_controller.txt"
+
+
+def test_driving_instructor_tool_contains_current_static_course_structure() -> None:
+    content = Path("app/tools-knowleage/generated/course_driving_instructor.txt").read_text(encoding="utf-8")
+
+    assert "384 שעות עיוניות" in content
+    assert "87 שעות מעשיות" in content
+    assert "סך הכול: 479 שעות" in content
+    assert "רישיון נהיגה דרגה B ידני במשך 3 שנים לפחות" in content
+    assert "מבדקי מכון פילת" in content
+    assert "שלוש פעמים בשבוע, בימים א', ג', ה'" in content
+    assert "17:30-20:45" in content
+    assert "פעמיים בשבוע בשעות" not in content
+    assert "ימי שישי לסירוגין" not in content
 
 
 def test_work_at_height_refresher_uses_previous_certificate_and_allows_seven_topics() -> None:

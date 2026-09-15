@@ -124,7 +124,6 @@ class AgentService:
         context = AgentContext(session_id=session_id)
 
         yield {"type": "status", "message": "מחפש מידע מתאים..."}
-
         try:
             result = Runner.run_streamed(
                 self._get_streaming_agent(),
@@ -206,6 +205,7 @@ class AgentService:
                     + self._course_accuracy_instructions()
                     + self._work_at_height_registration_instructions()
                     + self._forklift_registration_instructions()
+                    + self._driver_eye_exam_link_instructions()
                     + self._mybusiness_instructions()
                     + self._sales_flow_instructions()
                 ),
@@ -227,6 +227,7 @@ class AgentService:
                     + self._course_accuracy_instructions()
                     + self._work_at_height_registration_instructions()
                     + self._forklift_registration_instructions()
+                    + self._driver_eye_exam_link_instructions()
                     + self._mybusiness_instructions()
                     + self._sales_flow_instructions()
                 ),
@@ -246,6 +247,18 @@ Whenever you mention a price from these tools, explicitly say in the user's lang
 In Hebrew, use wording such as: "המחיר המעודכן הוא ... ש"ח לא כולל מע"מ".
 Only say "כולל מע"מ" if the specific tool output or approved source explicitly states that this exact price includes VAT.
 If the tool output does not specify VAT status, assume the price is excluding VAT. Do not calculate VAT or invent a VAT-included total.
+"""
+
+    def _driver_eye_exam_link_instructions(self) -> str:
+        return """
+
+קישור רשמי לבדיקת ראייה בקורסי נהיגה:
+כאשר השיחה עוסקת בקורס נהיגה, ורק כאשר בתשובה הנוכחית את מסבירה ללקוח שעליו לבצע בדיקת ראייה או בדיקת עיניים אצל אופטומטריסט כחלק מהתהליך, צרפי את הקישור הרשמי הבא:
+https://www.gov.il/he/service/apply_for_new_driver_drivers_license
+
+הציגי לפני הקישור משפט קצר וטבעי בשפת המשתמש שמסביר שניתן למלא שם את הבקשה המקוונת ולהמשיך לבדיקת הראייה, ואת הקישור עצמו כתבי בשורה נפרדת ככתובת URL רגילה.
+אל תצרפי את הקישור רק משום שמדובר בקורס נהיגה. אל תצרפי אותו אם התשובה אינה עוסקת בבדיקת ראייה, אם הקורס אינו קורס נהיגה, או אם הלקוח כבר אישר שביצע את הבדיקה ואינו מבקש את הקישור.
+אל תשני את כתובת הקישור, אל תמציאי קישור חלופי ואל תחליפי באמצעותו קישורים ייעודיים קיימים לתהליכי רכב ציבורי או משא כבד.
 """
 
     def _work_at_height_registration_instructions(self) -> str:

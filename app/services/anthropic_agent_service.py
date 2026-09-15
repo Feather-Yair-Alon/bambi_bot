@@ -178,6 +178,7 @@ class AnthropicAgentService:
             + service._course_accuracy_instructions()
             + service._work_at_height_registration_instructions()
             + service._forklift_registration_instructions()
+            + service._driver_eye_exam_link_instructions()
             + service._mybusiness_instructions()
             + service._sales_flow_instructions()
             + """
