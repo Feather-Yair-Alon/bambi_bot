@@ -248,6 +248,26 @@ def test_handoff_contact_card_and_link_use_whatsapp_number() -> None:
     assert "קורס מלגזה" in parse_qs(parsed.query)["text"][0]
 
 
+def test_safety_controller_handoff_uses_tali_contact_and_whatsapp_link() -> None:
+    contact = find_approved_handoff_contact(
+        "להמשך בירור בקורס בקר בטיחות אפשר לפנות לטלי: 052-702-3884"
+    )
+
+    assert contact is not None
+    assert contact.owner.startswith("טלי")
+    assert contact.phone == "052-702-3884"
+
+    link = build_handoff_link(
+        contact,
+        [{"role": "user", "content": "אני רוצה פרטים על קורס בקר בטיחות"}],
+    )
+
+    parsed = urlparse(link)
+    assert parsed.netloc == "wa.me"
+    assert parsed.path == "/972527023884"
+    assert "קורס בקר בטיחות" in parse_qs(parsed.query)["text"][0]
+
+
 def test_handoff_summary_is_compact_and_removes_personal_details() -> None:
     history = [
         {"role": "user", "content": "שלום"},

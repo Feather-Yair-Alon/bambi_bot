@@ -59,7 +59,14 @@ def test_work_at_height_uses_mika_whatsapp() -> None:
 def test_safety_courses_use_tali_whatsapp() -> None:
     service = ContactChannelService()
 
-    for course_name in ["השתלמות טכוגרף", "קורס נאמני בטיחות", "יום עיון לקציני בטיחות", "אבטחת מטענים"]:
+    for course_name in [
+        "קורס בקר בטיחות",
+        "הכשרת בקרי בטיחות בבנייה",
+        "השתלמות טכוגרף",
+        "קורס נאמני בטיחות",
+        "יום עיון לקציני בטיחות",
+        "אבטחת מטענים",
+    ]:
         result = service.find_course_contact(course_name)
 
         assert result["found"] is True, course_name
